@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/DzulfiqarSiraj/go-backend/src/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,28 +33,27 @@ type User struct {
 	Id       int    `json:"id" form:"id"`
 	Email    string `json:"email" form:"email"`
 	Password string `json:"password" form:"password"`
+	Name     string `json:"name" form:"name"`
 }
 
 func ListAllUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.Query("page"))
+
+	users, err := models.FindAllUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, &responseOnly{
+			Success: false,
+			Message: "Internal Server Error",
+		})
+		return
+	}
 	c.JSON(http.StatusOK, responseList{
 		Success: true,
 		Message: "List All Users",
 		PageInfo: pageInfo{
 			Page: page,
 		},
-		Results: []User{
-			{
-				Id:       1,
-				Email:    "admin@mail.com",
-				Password: "1234",
-			},
-			{
-				Id:       2,
-				Email:    "guest@mail.com",
-				Password: "1234",
-			},
-		},
+		Results: users,
 	})
 }
 
