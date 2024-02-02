@@ -7,7 +7,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func connect() *sqlx.DB {
+func conn() *sqlx.DB {
 	db, err := sqlx.Connect("postgres", "user=postgres dbname=go-coffee-shop password=1 sslmode=disable")
 	if err != nil {
 		log.Fatalln(err)
@@ -15,4 +15,4 @@ func connect() *sqlx.DB {
 	return db
 }
 
-var DB *sqlx.DB = connect()
+var DB *sqlx.DB = conn()
