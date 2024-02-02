@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/DzulfiqarSiraj/go-backend/src/lib"
@@ -11,34 +10,23 @@ import (
 var db *sqlx.DB = lib.DB
 
 type User struct {
-	Id          int          `db:"id" json:"id"`
-	Email       string       `db:"email" json:"email" form:"email" binding:"email"`
-	Password    string       `db:"password" json:"password" form:"password"`
-	FullName    string       `db:"fullName" json:"fullName" form:"fullName"`
-	PhoneNumber string       `db:"phoneNumber" json:"phoneNumber" form:"phoneNumber"`
-	Address     string       `db:"address" json:"address" form:"address"`
-	Role        string       `db:"role" json:"role" form:"role"`
-	Picture     string       `db:"picture" json:"picture" form:"picture"`
-	CreatedAt   time.Time    `db:"createdAt" json:"createdAt"`
-	UpdatedAt   sql.NullTime `db:"updatedAt" json:"updatedAt"`
+	Id          int         `db:"id" json:"id"`
+	Email       string      `db:"email" json:"email" form:"email" binding:"email"`
+	Password    string      `db:"password" json:"password" form:"password"`
+	FullName    interface{} `db:"fullName" json:"fullName" form:"default:null"`
+	PhoneNumber interface{} `db:"phoneNumber" json:"phoneNumber" form:"default:null"`
+	Address     interface{} `db:"address" json:"address" form:"default:null"`
+	Role        *string     `db:"role" json:"role" form:"default:Customer"`
+	Picture     interface{} `db:"picture" json:"picture" form:"default:null"`
+	CreatedAt   *time.Time  `db:"createdAt" json:"createdAt"`
+	UpdatedAt   *time.Time  `db:"updatedAt" json:"updatedAt"`
 }
 
-type InfoUser struct {
-	Data  []User
-	Count int
-}
-
-func FindAllUsers(limit int, offset int) (InfoUser, error) {
-	sql := `SELECT * FROM "users" LIMIT $1 OFFSET $2`
-	sqlCount := `SELECT COUNT(*) FROM "users"`
-	result := InfoUser{}
-	dataUser := []User{}
-	err := db.Select(&dataUser, sql, limit, offset)
-
-	result.Data = dataUser
-	row := db.QueryRow(sqlCount)
-	err = row.Scan(&result.Count)
-	return result, err
+func FindAllUsers() ([]User, error) {
+	sql := `SELECT * FROM "users"`
+	data := []User{}
+	err := db.Select(&data, sql)
+	return data, err
 }
 
 func FindOneUser(id int) (User, error) {
@@ -48,9 +36,16 @@ func FindOneUser(id int) (User, error) {
 	return data, err
 }
 
+func FindOneUserByEmail(email string) (User, error) {
+	sql := `SELECT * FROM "users" WHERE "email" = $1`
+	data := User{}
+	err := db.Get(&data, sql, email)
+	return data, err
+}
+
 func CreateUser(data User) (User, error) {
-	sql :=
-		`INSERT INTO "users" ("email", "password") VALUES 
+	sql := `
+	INSERT INTO "users" ("email","password") VALUES
 	(:email, :password)
 	RETURNING *`
 
@@ -60,6 +55,7 @@ func CreateUser(data User) (User, error) {
 	for rows.Next() {
 		rows.StructScan(&result)
 	}
+
 	return result, err
 }
 
