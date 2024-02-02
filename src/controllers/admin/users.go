@@ -78,7 +78,7 @@ func DetailUser(c *gin.Context) {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusNotFound, &responseOnly{
 				Success: false,
-				Message: "No Data",
+				Message: "User Not Found",
 			})
 			return
 		}
