@@ -1,8 +1,10 @@
 package routers
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/DzulfiqarSiraj/go-backend/src/routers/admin"
+	"github.com/gin-gonic/gin"
+)
 
 func Combine(r *gin.Engine) {
-	UserRouter(r.Group("/users"))
-	ProductRouter(r.Group("/products"))
+	admin.Combine(r.Group("/admin"))
 }

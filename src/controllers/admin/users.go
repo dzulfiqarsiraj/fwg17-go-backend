@@ -3,20 +3,18 @@ package controllers
 import (
 	"fmt"
 	"log"
-	"math"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/DzulfiqarSiraj/go-backend/src/models"
+	"github.com/KEINOS/go-argonize"
 	"github.com/gin-gonic/gin"
 )
 
 type pageInfo struct {
-	Page      int `json:"page"`
-	Limit     int `json:"limit"`
-	LastPage  int `json:"lastPage"`
-	TotalData int `json:"totalData"`
+	Page int `json:"page"`
 }
 
 type responseList struct {
@@ -37,56 +35,37 @@ type responseOnly struct {
 }
 
 type User struct {
-	Id          int    `json:"id"`
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	FullName    string `json:"fullName"`
-	PhoneNumber string `json:"phoneNumber"`
-	Address     string `json:"address"`
-	Role        string `json:"role"`
-	Picture     string `json:"picture"`
+	Id          int         `json:"id"`
+	Email       string      `json:"email"`
+	Password    string      `json:"password"`
+	FullName    interface{} `json:"fullName"`
+	PhoneNumber interface{} `json:"phoneNumber"`
+	Address     interface{} `json:"address"`
+	Role        *string     `json:"role"`
+	Picture     interface{} `json:"picture"`
+	CreatedAt   *time.Time  `json:"createdAt"`
+	UpdatedAt   *time.Time  `json:"updatedAt"`
 }
 
 func ListAllUsers(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if page < 1 {
-		c.JSON(http.StatusBadRequest, &responseOnly{
-			Success: false,
-			Message: "No Such Page",
-		})
-		return
-	}
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "5"))
-	if limit < 1 {
-		c.JSON(http.StatusBadRequest, &responseOnly{
-			Success: false,
-			Message: "Limit Must Be At Least 1",
-		})
-		return
-	}
-	offset := (page - 1) * limit
-	result, err := models.FindAllUsers(limit, offset)
-
-	pageInfo := pageInfo{
-		Page:      page,
-		Limit:     limit,
-		LastPage:  int(math.Ceil(float64(result.Count) / float64(limit))),
-		TotalData: result.Count,
-	}
-
+	page, _ := strconv.Atoi(c.Query("page"))
+	users, err := models.FindAllUsers()
 	if err != nil {
-		fmt.Println(err)
+		log.Fatalln(err)
 		c.JSON(http.StatusInternalServerError, &responseOnly{
 			Success: false,
 			Message: "Internal Server Error",
 		})
 		return
 	}
+
 	c.JSON(http.StatusOK, responseList{
-		Success:  true,
-		Message:  "List All Users",
-		PageInfo: pageInfo,
-		Results:  result.Data,
+		Success: true,
+		Message: "List All Users",
+		PageInfo: pageInfo{
+			Page: page,
+		},
+		Results: users,
 	})
 }
 
@@ -119,19 +98,45 @@ func DetailUser(c *gin.Context) {
 
 func CreateUser(c *gin.Context) {
 	data := models.User{}
+	emailInput := c.PostForm("email")
+	passwordInput := c.PostForm("password")
 
-	err := c.Bind(&data)
-	if err != nil {
+	if emailInput == "" || passwordInput == "" {
 		c.JSON(http.StatusBadRequest, &responseOnly{
 			Success: false,
-			Message: "Invalid Input",
+			Message: "Email or Password Must Not Be Empty",
 		})
 		return
 	}
 
+	existingEmail, _ := models.FindOneUserByEmail(emailInput)
+
+	if existingEmail.Email == emailInput {
+		c.JSON(http.StatusBadRequest, &responseOnly{
+			Success: false,
+			Message: "Email is Already Used",
+		})
+		return
+	}
+
+	c.Bind(&data)
+
+	plain := []byte(data.Password)
+	hash, err := argonize.Hash(plain)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, &responseOnly{
+			Success: false,
+			Message: "Can't Generate Hashed Password",
+		})
+		return
+	}
+
+	data.Password = hash.String()
+
 	user, err := models.CreateUser(data)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 		c.JSON(http.StatusInternalServerError, &responseOnly{
 			Success: false,
 			Message: "Internal Server Error",
