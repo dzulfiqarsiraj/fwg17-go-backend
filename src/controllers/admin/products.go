@@ -137,3 +137,30 @@ func UpdateProduct(c *gin.Context) {
 		Results: product,
 	})
 }
+
+func DeleteProduct(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	product, err := models.DeleteProduct(id)
+	if err != nil {
+		log.Println(err)
+		if strings.HasPrefix(err.Error(), "sql: no rows") {
+			c.JSON(http.StatusNotFound, &responseOnly{
+				Success: false,
+				Message: "No Data",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, &responseOnly{
+			Success: false,
+			Message: "Internal Server Error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, &response{
+		Success: true,
+		Message: "Delete Product",
+		Results: product,
+	})
+}

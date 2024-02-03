@@ -77,3 +77,10 @@ func UpdateProduct(data Product) (Product, error) {
 	}
 	return result, err
 }
+
+func DeleteProduct(id int) (Product, error) {
+	sql := `DELETE FROM "products" WHERE "id" = $1 RETURNING *`
+	data := Product{}
+	err := db.Get(&data, sql, id)
+	return data, err
+}

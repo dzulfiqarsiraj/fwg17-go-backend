@@ -10,4 +10,5 @@ func ProductRouter(r *gin.RouterGroup) {
 	r.GET("/:id", controllers.DetailProduct)
 	r.POST("", controllers.CreateProduct)
 	r.PATCH("/:id", controllers.UpdateProduct)
+	r.DELETE("/:id", controllers.DeleteProduct)
 }
