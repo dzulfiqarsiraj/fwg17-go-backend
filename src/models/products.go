@@ -27,3 +27,25 @@ func FindOneProduct(id int) (Product, error) {
 	err := db.Get(&data, sql, id)
 	return data, err
 }
+
+func FindOneProductByName(name string) (Product, error) {
+	sql := `SELECT * FROM "products" WHERE "name" = $1`
+	data := Product{}
+	err := db.Get(&data, sql, name)
+	return data, err
+}
+
+func CreateProduct(data Product) (Product, error) {
+	sql := `
+	INSERT INTO "products" ("name","basePrice","description","image","discount","isBestSeller") VALUES
+	(:name, :basePrice, :description, :image, :discount, :isBestSeller)
+	RETURNING *`
+
+	result := Product{}
+	rows, err := db.NamedQuery(sql, data)
+
+	for rows.Next() {
+		rows.StructScan(&result)
+	}
+	return result, err
+}

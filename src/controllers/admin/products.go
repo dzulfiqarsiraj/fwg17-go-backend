@@ -58,3 +58,43 @@ func DetailProduct(c *gin.Context) {
 		Results: product,
 	})
 }
+
+func CreateProduct(c *gin.Context) {
+	data := models.Product{}
+	nameInput := c.PostForm("name")
+
+	if nameInput == "" {
+		c.JSON(http.StatusBadRequest, &responseOnly{
+			Success: false,
+			Message: "Name Must Not Be Empty",
+		})
+		return
+	}
+
+	existingProduct, _ := models.FindOneProductByName(nameInput)
+
+	if existingProduct.Name == &nameInput {
+		c.JSON(http.StatusBadRequest, &responseOnly{
+			Success: false,
+			Message: "Name is Already Exist",
+		})
+		return
+	}
+
+	c.Bind(&data)
+
+	product, err := models.CreateProduct(data)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, &responseOnly{
+			Success: false,
+			Message: "Internal Server Error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, &response{
+		Success: true,
+		Message: "Product Created Successfully",
+		Results: product,
+	})
+}
