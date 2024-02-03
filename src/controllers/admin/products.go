@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -74,8 +73,6 @@ func CreateProduct(c *gin.Context) {
 
 	existingProduct, _ := models.FindOneProductByName(nameInput)
 	existingProductName := existingProduct.Name
-	fmt.Println(*existingProductName)
-	fmt.Println(nameInput)
 
 	if *existingProductName == nameInput {
 		c.JSON(http.StatusBadRequest, &responseOnly{
