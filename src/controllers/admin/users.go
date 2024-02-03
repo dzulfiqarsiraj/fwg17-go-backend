@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/DzulfiqarSiraj/go-backend/src/models"
 	"github.com/KEINOS/go-argonize"
@@ -32,19 +31,6 @@ type response struct {
 type responseOnly struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
-}
-
-type User struct {
-	Id          int         `json:"id"`
-	Email       string      `json:"email"`
-	Password    string      `json:"password"`
-	FullName    interface{} `json:"fullName"`
-	PhoneNumber interface{} `json:"phoneNumber"`
-	Address     interface{} `json:"address"`
-	Role        *string     `json:"role"`
-	Picture     interface{} `json:"picture"`
-	CreatedAt   *time.Time  `json:"createdAt"`
-	UpdatedAt   *time.Time  `json:"updatedAt"`
 }
 
 func ListAllUsers(c *gin.Context) {
@@ -109,9 +95,9 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	existingEmail, _ := models.FindOneUserByEmail(emailInput)
+	existingUser, _ := models.FindOneUserByEmail(emailInput)
 
-	if existingEmail.Email == emailInput {
+	if existingUser.Email == emailInput {
 		c.JSON(http.StatusBadRequest, &responseOnly{
 			Success: false,
 			Message: "Email is Already Used",
@@ -153,10 +139,37 @@ func CreateUser(c *gin.Context) {
 
 func UpdateUser(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
+	emailInput := c.PostForm("email")
+
+	if emailInput != "" {
+		existingUser, _ := models.FindOneUserByEmail(emailInput)
+
+		if emailInput == existingUser.Email {
+			c.JSON(http.StatusBadRequest, &responseOnly{
+				Success: false,
+				Message: "Email is Already Used",
+			})
+			return
+		}
+	}
 
 	data := models.User{}
 
 	c.Bind(&data)
+	if data.Password != "" {
+		plain := []byte(data.Password)
+		hash, err := argonize.Hash(plain)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, &responseOnly{
+				Success: false,
+				Message: "Can't Generate Hashed Password",
+			})
+			return
+		}
+
+		data.Password = hash.String()
+	}
+
 	data.Id = id
 
 	user, err := models.UpdateUser(data)
@@ -169,6 +182,7 @@ func UpdateUser(c *gin.Context) {
 		})
 		return
 	}
+
 	c.JSON(http.StatusOK, &response{
 		Success: true,
 		Message: "Update User Successfully",
