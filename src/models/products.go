@@ -12,7 +12,7 @@ type Product struct {
 	Description  *string    `db:"description" json:"description" form:"description"`
 	Image        *string    `db:"image" json:"image" form:"image"`
 	IsBestSeller *bool      `db:"isBestSeller" json:"isBestSeller" form:"isBestSeller"`
-	Discount     *int       `db:"discount" json:"discount" form:"discount"`
+	Discount     *float64   `db:"discount" json:"discount" form:"discount"`
 	CreatedAt    *time.Time `db:"createdAt" json:"createdAt"`
 	UpdatedAt    *time.Time `db:"updatedAt" json:"updatedAt"`
 }
@@ -60,8 +60,8 @@ func UpdateProduct(data Product) (Product, error) {
 	"basePrice"=COALESCE(NULLIF(:basePrice,0),"basePrice"),
 	"description"=COALESCE(NULLIF(:description,''),"description"),
 	"image"=COALESCE(NULLIF(:image,''),"image"),
-	"isBestSeller"=COALESCE(NULLIF(:isBestSeller,false),"isBestSeller"),
-	"discount"=COALESCE(NULLIF(:discount,0),"discount"),
+	"isBestSeller"=COALESCE(:isBestSeller,false),
+	"discount"=COALESCE(NULLIF(:discount,0.0),"discount"),
 	"updatedAt"=NOW()
 	WHERE id = :id
 	RETURNING *
