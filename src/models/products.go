@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Product struct {
 	Id           int        `db:"id" json:"id"`
@@ -43,6 +46,31 @@ func CreateProduct(data Product) (Product, error) {
 
 	result := Product{}
 	rows, err := db.NamedQuery(sql, data)
+
+	for rows.Next() {
+		rows.StructScan(&result)
+	}
+	return result, err
+}
+
+func UpdateProduct(data Product) (Product, error) {
+	sql := `
+	UPDATE "products" SET
+	"name"=COALESCE(NULLIF(:name,''),"name"),
+	"basePrice"=COALESCE(NULLIF(:basePrice,0),"basePrice"),
+	"description"=COALESCE(NULLIF(:description,''),"description"),
+	"image"=COALESCE(NULLIF(:image,''),"image"),
+	"isBestSeller"=COALESCE(NULLIF(:isBestSeller,false),"isBestSeller"),
+	"discount"=COALESCE(NULLIF(:discount,0),"discount"),
+	"updatedAt"=NOW()
+	WHERE id = :id
+	RETURNING *
+	`
+	result := Product{}
+	rows, err := db.NamedQuery(sql, data)
+	fmt.Println(sql)
+	fmt.Println(rows)
+	fmt.Println(err)
 
 	for rows.Next() {
 		rows.StructScan(&result)

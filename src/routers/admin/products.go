@@ -9,4 +9,5 @@ func ProductRouter(r *gin.RouterGroup) {
 	r.GET("", controllers.ListAllProducts)
 	r.GET("/:id", controllers.DetailProduct)
 	r.POST("", controllers.CreateProduct)
+	r.PATCH("/:id", controllers.UpdateProduct)
 }

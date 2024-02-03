@@ -98,3 +98,42 @@ func CreateProduct(c *gin.Context) {
 		Results: product,
 	})
 }
+
+func UpdateProduct(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	nameInput := c.PostForm("name")
+
+	if nameInput != "" {
+		existingProduct, _ := models.FindOneProductByName(nameInput)
+
+		if nameInput == *existingProduct.Name {
+			c.JSON(http.StatusBadRequest, &responseOnly{
+				Success: false,
+				Message: "Name is Already Used",
+			})
+			return
+		}
+	}
+
+	data := models.Product{}
+
+	c.Bind(&data)
+
+	data.Id = id
+
+	product, err := models.UpdateProduct(data)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, &responseOnly{
+			Success: false,
+			Message: "Internal Server Error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, &response{
+		Success: true,
+		Message: "Update Product Successfully",
+		Results: product,
+	})
+}
