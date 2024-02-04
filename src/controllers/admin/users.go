@@ -141,6 +141,18 @@ func UpdateUser(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	emailInput := c.PostForm("email")
 
+	existingUser, err := models.FindOneUser(id)
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "sql: no rows") {
+			c.JSON(http.StatusBadRequest, &responseOnly{
+				Success: false,
+				Message: "User Not Found",
+			})
+			return
+		}
+		fmt.Println(existingUser)
+	}
+
 	if emailInput != "" {
 		existingUser, _ := models.FindOneUserByEmail(emailInput)
 
@@ -212,7 +224,7 @@ func DeleteUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &response{
 		Success: true,
-		Message: "Delete User",
+		Message: "Delete User Successfully",
 		Results: user,
 	})
 }
