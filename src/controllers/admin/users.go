@@ -3,6 +3,7 @@ package admin_controllers
 import (
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -17,7 +18,15 @@ func ListAllUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
 	offset := (page - 1) * limit
-	users, err := models.FindAllUsers(limit, offset)
+	result, err := models.FindAllUsers(limit, offset)
+
+	pageInfo := &services.PageInfo{
+		Page:      page,
+		Limit:     limit,
+		TotalPage: int(math.Ceil(float64(result.Count) / float64(limit))),
+		TotalData: result.Count,
+	}
+
 	if err != nil {
 		log.Fatalln(err)
 		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
@@ -28,12 +37,10 @@ func ListAllUsers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, services.ResponseList{
-		Success: true,
-		Message: "List All Users",
-		PageInfo: services.PageInfo{
-			Page: page,
-		},
-		Results: users,
+		Success:  true,
+		Message:  "List All Users",
+		PageInfo: *pageInfo,
+		Results:  result.Data,
 	})
 }
 

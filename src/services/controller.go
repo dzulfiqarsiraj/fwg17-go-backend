@@ -1,7 +1,15 @@
 package services
 
 type PageInfo struct {
-	Page int `json:"page"`
+	Page      int `json:"page"`
+	Limit     int `json:"limit"`
+	TotalPage int `json:"totalPage"`
+	TotalData int `json:"totalData"`
+}
+
+type Info struct {
+	Data  interface{}
+	Count int
 }
 
 type ResponseList struct {

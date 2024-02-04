@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/DzulfiqarSiraj/go-backend/src/lib"
+	"github.com/DzulfiqarSiraj/go-backend/src/services"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -22,14 +23,21 @@ type User struct {
 	UpdatedAt   *time.Time `db:"updatedAt" json:"updatedAt"`
 }
 
-func FindAllUsers(limit int, offset int) ([]User, error) {
+func FindAllUsers(limit int, offset int) (services.Info, error) {
 	sql := `SELECT * FROM "users" 
 	ORDER BY "id" ASC
 	LIMIT $1
 	OFFSET $2`
+	sqlCount := `SELECT COUNT(*) FROM "users"`
+	result := services.Info{}
 	data := []User{}
 	err := db.Select(&data, sql, limit, offset)
-	return data, err
+	result.Data = data
+
+	row := db.QueryRow(sqlCount)
+	err = row.Scan(&result.Count)
+
+	return result, err
 }
 
 func FindOneUser(id int) (User, error) {

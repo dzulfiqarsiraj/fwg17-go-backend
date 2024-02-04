@@ -3,6 +3,8 @@ package models
 import (
 	"fmt"
 	"time"
+
+	"github.com/DzulfiqarSiraj/go-backend/src/services"
 )
 
 type Product struct {
@@ -17,11 +19,20 @@ type Product struct {
 	UpdatedAt    *time.Time `db:"updatedAt" json:"updatedAt"`
 }
 
-func FindAllProducts() ([]Product, error) {
-	sql := `SELECT * FROM "products" ORDER BY "id" ASC`
+func FindAllProducts(limit int, offset int) (services.Info, error) {
+	sql := `SELECT * FROM "products" 
+	ORDER BY "id" ASC
+	LIMIT $1
+	OFFSET $2`
+	sqlCount := `SELECT COUNT(*) FROM "products"`
+	result := services.Info{}
 	data := []Product{}
-	err := db.Select(&data, sql)
-	return data, err
+	err := db.Select(&data, sql, limit, offset)
+	result.Data = data
+
+	row := db.QueryRow(sqlCount)
+	err = row.Scan(&result.Count)
+	return result, err
 }
 
 func FindOneProduct(id int) (Product, error) {
