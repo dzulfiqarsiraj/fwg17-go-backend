@@ -1,4 +1,4 @@
-package controllers
+package admin_controllers
 
 import (
 	"fmt"
@@ -8,47 +8,29 @@ import (
 	"strings"
 
 	"github.com/DzulfiqarSiraj/go-backend/src/models"
+	"github.com/DzulfiqarSiraj/go-backend/src/services"
 	"github.com/KEINOS/go-argonize"
 	"github.com/gin-gonic/gin"
 )
 
-type pageInfo struct {
-	Page int `json:"page"`
-}
-
-type responseList struct {
-	Success  bool        `json:"success"`
-	Message  string      `json:"message"`
-	PageInfo pageInfo    `json:"pageInfo"`
-	Results  interface{} `json:"results"`
-}
-type response struct {
-	Success bool        `json:"success"`
-	Message string      `json:"message"`
-	Results interface{} `json:"results"`
-}
-
-type responseOnly struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-}
-
 func ListAllUsers(c *gin.Context) {
-	page, _ := strconv.Atoi(c.Query("page"))
-	users, err := models.FindAllUsers()
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
+	offset := (page - 1) * limit
+	users, err := models.FindAllUsers(limit, offset)
 	if err != nil {
 		log.Fatalln(err)
-		c.JSON(http.StatusInternalServerError, &responseOnly{
+		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
 			Message: "Internal Server Error",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, responseList{
+	c.JSON(http.StatusOK, services.ResponseList{
 		Success: true,
 		Message: "List All Users",
-		PageInfo: pageInfo{
+		PageInfo: services.PageInfo{
 			Page: page,
 		},
 		Results: users,
@@ -62,20 +44,20 @@ func DetailUser(c *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
-			c.JSON(http.StatusNotFound, &responseOnly{
+			c.JSON(http.StatusNotFound, &services.ResponseOnly{
 				Success: false,
 				Message: "User Not Found",
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, &responseOnly{
+		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
 			Message: "Internal Server Error",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, &response{
+	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
 		Message: "Detail User",
 		Results: user,
@@ -88,7 +70,7 @@ func CreateUser(c *gin.Context) {
 	passwordInput := c.PostForm("password")
 
 	if emailInput == "" || passwordInput == "" {
-		c.JSON(http.StatusBadRequest, &responseOnly{
+		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 			Success: false,
 			Message: "Email or Password Must Not Be Empty",
 		})
@@ -98,7 +80,7 @@ func CreateUser(c *gin.Context) {
 	existingUser, _ := models.FindOneUserByEmail(emailInput)
 
 	if existingUser.Email == emailInput {
-		c.JSON(http.StatusBadRequest, &responseOnly{
+		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 			Success: false,
 			Message: "Email is Already Used",
 		})
@@ -111,7 +93,7 @@ func CreateUser(c *gin.Context) {
 	hash, err := argonize.Hash(plain)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, &responseOnly{
+		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 			Success: false,
 			Message: "Can't Generate Hashed Password",
 		})
@@ -123,14 +105,14 @@ func CreateUser(c *gin.Context) {
 	user, err := models.CreateUser(data)
 	if err != nil {
 		log.Fatalln(err)
-		c.JSON(http.StatusInternalServerError, &responseOnly{
+		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
 			Message: "Internal Server Error",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, &response{
+	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
 		Message: "User Created Successfully",
 		Results: user,
@@ -144,7 +126,7 @@ func UpdateUser(c *gin.Context) {
 	existingUser, err := models.FindOneUser(id)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
-			c.JSON(http.StatusBadRequest, &responseOnly{
+			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
 				Message: "User Not Found",
 			})
@@ -157,7 +139,7 @@ func UpdateUser(c *gin.Context) {
 		existingUser, _ := models.FindOneUserByEmail(emailInput)
 
 		if emailInput == existingUser.Email {
-			c.JSON(http.StatusBadRequest, &responseOnly{
+			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
 				Message: "Email is Already Used",
 			})
@@ -172,7 +154,7 @@ func UpdateUser(c *gin.Context) {
 		plain := []byte(data.Password)
 		hash, err := argonize.Hash(plain)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, &responseOnly{
+			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
 				Message: "Can't Generate Hashed Password",
 			})
@@ -188,14 +170,14 @@ func UpdateUser(c *gin.Context) {
 
 	if err != nil {
 		fmt.Println(err)
-		c.JSON(http.StatusInternalServerError, &responseOnly{
+		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
 			Message: "Internal Server Error",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, &response{
+	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
 		Message: "Update User Successfully",
 		Results: user,
@@ -209,20 +191,20 @@ func DeleteUser(c *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
-			c.JSON(http.StatusNotFound, &responseOnly{
+			c.JSON(http.StatusNotFound, &services.ResponseOnly{
 				Success: false,
 				Message: "No Data",
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, &responseOnly{
+		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
 			Message: "Internal Server Error",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, &response{
+	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
 		Message: "Delete User Successfully",
 		Results: user,

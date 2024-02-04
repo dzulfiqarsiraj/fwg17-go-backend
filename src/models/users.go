@@ -22,10 +22,13 @@ type User struct {
 	UpdatedAt   *time.Time `db:"updatedAt" json:"updatedAt"`
 }
 
-func FindAllUsers() ([]User, error) {
-	sql := `SELECT * FROM "users" ORDER BY "id" ASC`
+func FindAllUsers(limit int, offset int) ([]User, error) {
+	sql := `SELECT * FROM "users" 
+	ORDER BY "id" ASC
+	LIMIT $1
+	OFFSET $2`
 	data := []User{}
-	err := db.Select(&data, sql)
+	err := db.Select(&data, sql, limit, offset)
 	return data, err
 }
 

@@ -1,14 +1,14 @@
 package admin
 
 import (
-	controllers "github.com/DzulfiqarSiraj/go-backend/src/controllers/admin"
+	admin_controllers "github.com/DzulfiqarSiraj/go-backend/src/controllers/admin"
 	"github.com/gin-gonic/gin"
 )
 
 func ProductRouter(r *gin.RouterGroup) {
-	r.GET("", controllers.ListAllProducts)
-	r.GET("/:id", controllers.DetailProduct)
-	r.POST("", controllers.CreateProduct)
-	r.PATCH("/:id", controllers.UpdateProduct)
-	r.DELETE("/:id", controllers.DeleteProduct)
+	r.GET("", admin_controllers.ListAllProducts)
+	r.GET("/:id", admin_controllers.DetailProduct)
+	r.POST("", admin_controllers.CreateProduct)
+	r.PATCH("/:id", admin_controllers.UpdateProduct)
+	r.DELETE("/:id", admin_controllers.DeleteProduct)
 }

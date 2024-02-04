@@ -1,4 +1,4 @@
-package controllers
+package admin_controllers
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/DzulfiqarSiraj/go-backend/src/models"
+	"github.com/DzulfiqarSiraj/go-backend/src/services"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,17 +17,17 @@ func ListAllProducts(c *gin.Context) {
 	products, err := models.FindAllProducts()
 	if err != nil {
 		log.Fatalln(err)
-		c.JSON(http.StatusInternalServerError, &responseOnly{
+		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
 			Message: "Internal Server Error",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, &responseList{
+	c.JSON(http.StatusOK, &services.ResponseList{
 		Success: true,
 		Message: "List All Products",
-		PageInfo: pageInfo{
+		PageInfo: services.PageInfo{
 			Page: page,
 		},
 		Results: products,
@@ -40,20 +41,20 @@ func DetailProduct(c *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
-			c.JSON(http.StatusNotFound, &responseOnly{
+			c.JSON(http.StatusNotFound, &services.ResponseOnly{
 				Success: false,
 				Message: "Product Not Found",
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, &responseOnly{
+		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
 			Message: "Internal Server Error",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, &response{
+	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
 		Message: "Detail Product",
 		Results: product,
@@ -65,7 +66,7 @@ func CreateProduct(c *gin.Context) {
 	nameInput := c.PostForm("name")
 
 	if nameInput == "" {
-		c.JSON(http.StatusBadRequest, &responseOnly{
+		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 			Success: false,
 			Message: "Name Must Not Be Empty",
 		})
@@ -76,7 +77,7 @@ func CreateProduct(c *gin.Context) {
 	existingProductName := existingProduct.Name
 
 	if *existingProductName == nameInput {
-		c.JSON(http.StatusBadRequest, &responseOnly{
+		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 			Success: false,
 			Message: "Product Name is Already Exist",
 		})
@@ -87,14 +88,14 @@ func CreateProduct(c *gin.Context) {
 
 	product, err := models.CreateProduct(data)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, &responseOnly{
+		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
 			Message: "Internal Server Error",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, &response{
+	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
 		Message: "Product Created Successfully",
 		Results: product,
@@ -108,7 +109,7 @@ func UpdateProduct(c *gin.Context) {
 	existingProduct, err := models.FindOneProduct(id)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
-			c.JSON(http.StatusBadRequest, &responseOnly{
+			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
 				Message: "Product Not Found",
 			})
@@ -121,7 +122,7 @@ func UpdateProduct(c *gin.Context) {
 		existingProduct, _ := models.FindOneProductByName(nameInput)
 
 		if nameInput == *existingProduct.Name {
-			c.JSON(http.StatusBadRequest, &responseOnly{
+			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
 				Message: "Name is Already Used",
 			})
@@ -138,14 +139,14 @@ func UpdateProduct(c *gin.Context) {
 	product, err := models.UpdateProduct(data)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, &responseOnly{
+		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
 			Message: "Internal Server Error",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, &response{
+	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
 		Message: "Update Product Successfully",
 		Results: product,
@@ -159,20 +160,20 @@ func DeleteProduct(c *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
-			c.JSON(http.StatusNotFound, &responseOnly{
+			c.JSON(http.StatusNotFound, &services.ResponseOnly{
 				Success: false,
 				Message: "No Data",
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, &responseOnly{
+		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
 			Message: "Internal Server Error",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, &response{
+	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
 		Message: "Delete Product Successfully",
 		Results: product,

@@ -1,14 +1,14 @@
 package admin
 
 import (
-	controllers "github.com/DzulfiqarSiraj/go-backend/src/controllers/admin"
+	admin_controllers "github.com/DzulfiqarSiraj/go-backend/src/controllers/admin"
 	"github.com/gin-gonic/gin"
 )
 
 func UserRouter(r *gin.RouterGroup) {
-	r.GET("", controllers.ListAllUsers)
-	r.GET("/:id", controllers.DetailUser)
-	r.POST("", controllers.CreateUser)
-	r.PATCH("/:id", controllers.UpdateUser)
-	r.DELETE("/:id", controllers.DeleteUser)
+	r.GET("", admin_controllers.ListAllUsers)
+	r.GET("/:id", admin_controllers.DetailUser)
+	r.POST("", admin_controllers.CreateUser)
+	r.PATCH("/:id", admin_controllers.UpdateUser)
+	r.DELETE("/:id", admin_controllers.DeleteUser)
 }
