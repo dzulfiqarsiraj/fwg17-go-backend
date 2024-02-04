@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -104,6 +105,18 @@ func UpdateProduct(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	nameInput := c.PostForm("name")
 
+	existingProduct, err := models.FindOneProduct(id)
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "sql: no rows") {
+			c.JSON(http.StatusBadRequest, &responseOnly{
+				Success: false,
+				Message: "Product Not Found",
+			})
+			return
+		}
+		fmt.Println(existingProduct)
+	}
+
 	if nameInput != "" {
 		existingProduct, _ := models.FindOneProductByName(nameInput)
 
@@ -161,7 +174,7 @@ func DeleteProduct(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &response{
 		Success: true,
-		Message: "Delete Product",
+		Message: "Delete Product Successfully",
 		Results: product,
 	})
 }
