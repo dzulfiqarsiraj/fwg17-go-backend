@@ -46,7 +46,7 @@ func FindOneUserByEmail(email string) (User, error) {
 func CreateUser(data User) (User, error) {
 	sql := `
 	INSERT INTO "users" ("email","password","fullName","phoneNumber","address","role","picture") VALUES
-	(:email, :password, :fullName, :phoneNumber, :address, :role, :picture)
+	(:email, :password, :fullName, :phoneNumber, :address, COALESCE(:role,'Customer'), :picture)
 	RETURNING *`
 
 	result := User{}
