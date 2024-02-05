@@ -17,13 +17,17 @@ import (
 func ListAllUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
+	search := c.DefaultQuery("search", "")
+	orderBy := c.DefaultQuery("orderBy", "id")
 	offset := (page - 1) * limit
-	result, err := models.FindAllUsers(limit, offset)
+	result, err := models.FindAllUsers(search, orderBy, limit, offset)
+
+	totalPage := int(math.Ceil(float64(result.Count) / float64(limit)))
 
 	pageInfo := &services.PageInfo{
 		Page:      page,
 		Limit:     limit,
-		TotalPage: int(math.Ceil(float64(result.Count) / float64(limit))),
+		TotalPage: totalPage,
 		TotalData: result.Count,
 	}
 
@@ -94,7 +98,7 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	c.Bind(&data)
+	c.ShouldBind(&data)
 
 	plain := []byte(data.Password)
 	hash, err := argonize.Hash(plain)
@@ -156,7 +160,7 @@ func UpdateUser(c *gin.Context) {
 
 	data := models.User{}
 
-	c.Bind(&data)
+	c.ShouldBind(&data)
 	if data.Password != "" {
 		plain := []byte(data.Password)
 		hash, err := argonize.Hash(plain)

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/DzulfiqarSiraj/go-backend/src/lib"
@@ -23,19 +24,24 @@ type User struct {
 	UpdatedAt   *time.Time `db:"updatedAt" json:"updatedAt"`
 }
 
-func FindAllUsers(limit int, offset int) (services.Info, error) {
+func FindAllUsers(search string, orderBy string, limit int, offset int) (services.Info, error) {
 	sql := `SELECT * FROM "users" 
-	ORDER BY "id" ASC
-	LIMIT $1
-	OFFSET $2`
-	sqlCount := `SELECT COUNT(*) FROM "users"`
+	WHERE "fullName" ILIKE $1
+	ORDER BY "fullName" DESC
+	LIMIT $3
+	OFFSET $4`
+	fmt.Println(sql)
+	sqlCount := `SELECT COUNT(*) FROM "users" WHERE "fullName" ILIKE $1`
+	fmtSearch := fmt.Sprintf("%%%v%%", search)
+	fmtOrder := fmt.Sprintf(`"%v"`, orderBy)
+	fmt.Println(fmtOrder)
 	result := services.Info{}
 	data := []User{}
-	err := db.Select(&data, sql, limit, offset)
+	db.Select(&data, sql, fmtSearch, fmtOrder, limit, offset)
 	result.Data = data
 
-	row := db.QueryRow(sqlCount)
-	err = row.Scan(&result.Count)
+	row := db.QueryRow(sqlCount, fmtSearch)
+	err := row.Scan(&result.Count)
 
 	return result, err
 }
