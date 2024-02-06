@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/DzulfiqarSiraj/go-backend/src/lib"
 	"github.com/DzulfiqarSiraj/go-backend/src/models"
 	"github.com/DzulfiqarSiraj/go-backend/src/services"
 	"github.com/KEINOS/go-argonize"
@@ -18,9 +19,9 @@ func ListAllUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
 	search := c.DefaultQuery("search", "")
-	orderBy := c.DefaultQuery("orderBy", "id")
+	// orderBy := c.DefaultQuery("orderBy", "id")
 	offset := (page - 1) * limit
-	result, err := models.FindAllUsers(search, orderBy, limit, offset)
+	result, err := models.FindAllUsers(search, limit, offset)
 
 	totalPage := int(math.Ceil(float64(result.Count) / float64(limit)))
 
@@ -99,6 +100,11 @@ func CreateUser(c *gin.Context) {
 	}
 
 	c.ShouldBind(&data)
+
+	// upload file
+
+	data.Picture = lib.Upload(c, "picture", "users")
+	// *upload file
 
 	plain := []byte(data.Password)
 	hash, err := argonize.Hash(plain)
