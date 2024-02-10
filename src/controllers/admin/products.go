@@ -93,7 +93,7 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
-	c.Bind(&data)
+	c.ShouldBind(&data)
 
 	product, err := models.CreateProduct(data)
 	if err != nil {
@@ -141,7 +141,7 @@ func UpdateProduct(c *gin.Context) {
 
 	data := models.Product{}
 
-	c.Bind(&data)
+	c.ShouldBind(&data)
 
 	data.Id = id
 
@@ -167,7 +167,6 @@ func DeleteProduct(c *gin.Context) {
 
 	product, err := models.DeleteProduct(id)
 	if err != nil {
-		log.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusNotFound, &services.ResponseOnly{
 				Success: false,
