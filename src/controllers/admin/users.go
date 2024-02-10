@@ -19,9 +19,10 @@ func ListAllUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
 	search := c.DefaultQuery("search", "")
+	orderBy := c.DefaultQuery("orderBy", "id")
 	// orderBy := c.DefaultQuery("orderBy", "id")
 	offset := (page - 1) * limit
-	result, err := models.FindAllUsers(search, limit, offset)
+	result, err := models.FindAllUsers(search, orderBy, limit, offset)
 
 	totalPage := int(math.Ceil(float64(result.Count) / float64(limit)))
 
@@ -41,7 +42,7 @@ func ListAllUsers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, services.ResponseList{
+	c.JSON(http.StatusOK, &services.ResponseList{
 		Success:  true,
 		Message:  "List All Users",
 		PageInfo: *pageInfo,
@@ -80,6 +81,7 @@ func CreateUser(c *gin.Context) {
 	data := models.User{}
 	emailInput := c.PostForm("email")
 	passwordInput := c.PostForm("password")
+	roleInput := c.PostForm("role")
 
 	if emailInput == "" || passwordInput == "" {
 		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
@@ -97,6 +99,19 @@ func CreateUser(c *gin.Context) {
 			Message: "Email is Already Used",
 		})
 		return
+	}
+
+	if roleInput != "" {
+		switch roleInput {
+		case "Customer", "Staff Administrator", "Super Administrator":
+			fmt.Println("Valid Role")
+		default:
+			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
+				Success: false,
+				Message: "Invalid Role",
+			})
+			return
+		}
 	}
 
 	c.ShouldBind(&data)
@@ -120,8 +135,8 @@ func CreateUser(c *gin.Context) {
 	data.Password = hash.String()
 
 	user, err := models.CreateUser(data)
+
 	if err != nil {
-		log.Fatalln(err)
 		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
 			Message: "Internal Server Error",

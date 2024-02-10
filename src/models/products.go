@@ -27,11 +27,11 @@ func FindAllProducts(limit int, offset int) (services.Info, error) {
 	sqlCount := `SELECT COUNT(*) FROM "products"`
 	result := services.Info{}
 	data := []Product{}
-	err := db.Select(&data, sql, limit, offset)
+	db.Select(&data, sql, limit, offset)
 	result.Data = data
 
 	row := db.QueryRow(sqlCount)
-	err = row.Scan(&result.Count)
+	err := row.Scan(&result.Count)
 	return result, err
 }
 

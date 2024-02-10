@@ -18,7 +18,7 @@ func Upload(c *gin.Context, field string, dest string) *string {
 	}
 
 	fileType := file.Header["Content-Type"][0]
-	log.Println(file.Header["Content-Type"][0])
+	log.Println(file.Header)
 
 	fileName := fmt.Sprintf("%v%v", uuid.NewString(), fileExt[fileType])
 	fileDest := fmt.Sprintf("uploads/%v/%v", dest, fileName)
