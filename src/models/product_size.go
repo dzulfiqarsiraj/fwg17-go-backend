@@ -23,12 +23,12 @@ func FindAllProductSize(limit int, offset int) (services.Info, error) {
 	OFFSET $2`
 	sqlCount := `SELECT COUNT(*) FROM "productSize"`
 	result := services.Info{}
-	data := []Product{}
-	err := db.Select(&data, sql, limit, offset)
+	data := []ProductSize{}
+	db.Select(&data, sql, limit, offset)
 	result.Data = data
 
 	row := db.QueryRow(sqlCount)
-	err = row.Scan(&result.Count)
+	err := row.Scan(&result.Count)
 	return result, err
 }
 
@@ -36,6 +36,13 @@ func FindOneProductSize(id int) (ProductSize, error) {
 	sql := `SELECT * FROM "productSize" WHERE "id"=$1`
 	data := ProductSize{}
 	err := db.Get(&data, sql, id)
+	return data, err
+}
+
+func FindOneProductSizeBySize(size string) (ProductSize, error) {
+	sql := `SELECT * FROM "productSize" WHERE "size"=$1`
+	data := ProductSize{}
+	err := db.Get(&data, sql, size)
 	return data, err
 }
 
@@ -58,7 +65,7 @@ func UpdateProductSize(data ProductSize) (ProductSize, error) {
 	sql := `
 	UPDATE "productSize" SET
 	"size"=COALESCE(NULLIF(:size,''),"size"),
-	"productId"=COALESCE(NULLIF(:productId,''),"productId"),
+	"productId"=COALESCE(NULLIF(:productId,0),"productId"),
 	"additionalPrice"=COALESCE(NULLIF(:additionalPrice,0),"additionalPrice"),
 	"updatedAt"=NOW()
 	WHERE id = :id
