@@ -37,7 +37,7 @@ func ListAllProductSize(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.ResponseList{
 		Success:  true,
-		Message:  "List All Products",
+		Message:  "List All Product Size",
 		PageInfo: *pageInfo,
 		Results:  result.Data,
 	})
@@ -48,7 +48,7 @@ func DetailProductize(c *gin.Context) {
 
 	productSize, err := models.FindOneProductSize(id)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusNotFound, &services.ResponseOnly{
 				Success: false,
@@ -160,6 +160,7 @@ func UpdateProductSize(c *gin.Context) {
 		Results: productSize,
 	})
 }
+
 func DeleteProductSize(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
