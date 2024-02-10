@@ -19,31 +19,48 @@ type User struct {
 	PhoneNumber *string    `db:"phoneNumber" json:"phoneNumber" form:"phoneNumber"`
 	Address     *string    `db:"address" json:"address" form:"address"`
 	Role        *string    `db:"role" json:"role" form:"role"`
-	Picture     *string    `db:"picture" json:"picture" form:"picture"`
+	Picture     *string    `db:"picture" json:"picture"`
 	CreatedAt   *time.Time `db:"createdAt" json:"createdAt"`
 	UpdatedAt   *time.Time `db:"updatedAt" json:"updatedAt"`
 }
 
 func FindAllUsers(search string, orderBy string, limit int, offset int) (services.Info, error) {
-	sql := `SELECT * FROM "users" 
-	WHERE "fullName" ILIKE $1
-	ORDER BY "fullName" DESC
-	LIMIT $3
-	OFFSET $4`
-	fmt.Println(sql)
-	sqlCount := `SELECT COUNT(*) FROM "users" WHERE "fullName" ILIKE $1`
-	fmtSearch := fmt.Sprintf("%%%v%%", search)
-	fmtOrder := fmt.Sprintf(`"%v"`, orderBy)
-	fmt.Println(fmtOrder)
-	result := services.Info{}
-	data := []User{}
-	db.Select(&data, sql, fmtSearch, fmtOrder, limit, offset)
-	result.Data = data
+	var sql string
+	var sqlCount string
+	if search == "" {
+		sql = `SELECT * FROM "users"
+		ORDER BY $1 ASC
+		LIMIT $2
+		OFFSET $3`
+		sqlCount = `SELECT COUNT(*) FROM "users"`
+		fmtOrder := fmt.Sprintf("%q", orderBy)
+		fmt.Println(fmtOrder)
+		result := services.Info{}
+		data := []User{}
+		db.Select(&data, sql, fmtOrder, limit, offset)
+		result.Data = data
 
-	row := db.QueryRow(sqlCount, fmtSearch)
-	err := row.Scan(&result.Count)
+		row := db.QueryRow(sqlCount)
+		err := row.Scan(&result.Count)
 
-	return result, err
+		return result, err
+	} else {
+		sql = `SELECT * FROM "users" 
+		WHERE "fullName" ILIKE $1
+		LIMIT $2
+		OFFSET $3`
+		sqlCount = `SELECT COUNT(*) FROM "users" WHERE "fullName" ILIKE $1`
+		fmtSearch := fmt.Sprintf("%%%v%%", search)
+		result := services.Info{}
+		data := []User{}
+		db.Select(&data, sql, fmtSearch, limit, offset)
+		result.Data = data
+
+		row := db.QueryRow(sqlCount, fmtSearch)
+		err := row.Scan(&result.Count)
+
+		return result, err
+	}
 }
 
 func FindOneUser(id int) (User, error) {
@@ -68,6 +85,8 @@ func CreateUser(data User) (User, error) {
 
 	result := User{}
 	rows, err := db.NamedQuery(sql, data)
+	fmt.Println(err)
+	fmt.Println(rows)
 
 	for rows.Next() {
 		rows.StructScan(&result)
