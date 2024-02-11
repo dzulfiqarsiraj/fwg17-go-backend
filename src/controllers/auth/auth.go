@@ -90,48 +90,7 @@ func ForgotPassword(c *gin.Context) {
 }
 
 func Login(c *gin.Context) {
-	form := models.User{}
-	err := c.ShouldBind(&form)
 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
-			Success: false,
-			Message: "Invalid",
-		})
-		return
-	}
-
-	found, err := models.FindOneUserByEmail(form.Email)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, &services.ResponseOnly{
-			Success: false,
-			Message: "Wrong Email or Password",
-		})
-		return
-	}
-
-	decodedPassword, err := argonize.DecodeHashStr(found.Password)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, &services.ResponseOnly{
-			Success: false,
-			Message: "Wrong Email or Password",
-		})
-		return
-	}
-
-	plainPassword := []byte(form.Password)
-	if decodedPassword.IsValidPassword(plainPassword) {
-		c.JSON(http.StatusOK, &services.ResponseOnly{
-			Success: true,
-			Message: "Login Success",
-		})
-	} else {
-		c.JSON(http.StatusUnauthorized, &services.ResponseOnly{
-			Success: false,
-			Message: "Wrong Email or Password",
-		})
-		return
-	}
 }
 
 func Register(c *gin.Context) {
