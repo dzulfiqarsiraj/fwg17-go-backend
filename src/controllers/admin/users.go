@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -82,6 +83,7 @@ func CreateUser(c *gin.Context) {
 	emailInput := c.PostForm("email")
 	passwordInput := c.PostForm("password")
 	roleInput := c.PostForm("role")
+	pictureInput, _, _ := c.Request.FormFile("picture")
 
 	if emailInput == "" || passwordInput == "" {
 		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
@@ -117,8 +119,24 @@ func CreateUser(c *gin.Context) {
 	c.ShouldBind(&data)
 
 	// upload file
+	if pictureInput != nil {
+		data.Picture = lib.Upload(c, "picture", "users")
+		if *data.Picture == "Invalid File Type" {
+			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
+				Success: false,
+				Message: "File Type Must Be jpg/jpeg/png",
+			})
+			return
+		}
 
-	data.Picture = lib.Upload(c, "picture", "users")
+		if *data.Picture == "Invalid File Size" {
+			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
+				Success: false,
+				Message: "File Size Must Less than 1MB",
+			})
+			return
+		}
+	}
 	// *upload file
 
 	plain := []byte(data.Password)
@@ -154,6 +172,8 @@ func CreateUser(c *gin.Context) {
 func UpdateUser(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	emailInput := c.PostForm("email")
+	fileInput, _, _ := c.Request.FormFile("picture")
+	fmt.Println(&fileInput)
 
 	existingUser, err := models.FindOneUser(id)
 	if err != nil {
@@ -179,9 +199,12 @@ func UpdateUser(c *gin.Context) {
 		}
 	}
 
+	fmt.Println(*existingUser.Picture)
+
 	data := models.User{}
 
 	c.ShouldBind(&data)
+
 	if data.Password != "" {
 		plain := []byte(data.Password)
 		hash, err := argonize.Hash(plain)
@@ -195,6 +218,32 @@ func UpdateUser(c *gin.Context) {
 
 		data.Password = hash.String()
 	}
+
+	// upload file
+	if fileInput != nil {
+		data.Picture = lib.Upload(c, "picture", "users")
+		if *data.Picture == "Invalid File Type" {
+			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
+				Success: false,
+				Message: "File Type Must Be jpg/jpeg/png",
+			})
+			return
+		}
+
+		if *data.Picture == "Invalid File Size" {
+			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
+				Success: false,
+				Message: "File Size Must Less than 1MB",
+			})
+			return
+		}
+
+		fileName := *existingUser.Picture
+		fileDest := fmt.Sprintf("uploads/users/%v", fileName)
+		fmt.Println(fileDest)
+		os.Remove(fileDest)
+	}
+	// *upload file
 
 	data.Id = id
 
@@ -220,6 +269,13 @@ func DeleteUser(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	user, err := models.DeleteUser(id)
+	if user.Picture != nil {
+		fileName := *user.Picture
+		fileDest := fmt.Sprintf("uploads/users/%v", fileName)
+		fmt.Println(fileDest)
+		os.Remove(fileDest)
+	}
+	fmt.Println(*user.Picture)
 	if err != nil {
 		log.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {

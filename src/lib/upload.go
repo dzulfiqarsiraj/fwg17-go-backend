@@ -2,7 +2,6 @@ package lib
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -10,6 +9,8 @@ import (
 
 func Upload(c *gin.Context, field string, dest string) *string {
 	file, _ := c.FormFile(field)
+	invalidType := "Invalid File Type"
+	invalidSize := "Invalid File Size"
 
 	fileExt := map[string]string{
 		"image/jpg":  ".jpg",
@@ -18,7 +19,20 @@ func Upload(c *gin.Context, field string, dest string) *string {
 	}
 
 	fileType := file.Header["Content-Type"][0]
-	log.Println(file.Header)
+
+	_, typeExists := fileExt[fileType]
+
+	if !typeExists {
+		return &invalidType
+	}
+
+	if file.Size > 1048576 {
+		return &invalidSize
+	}
+
+	fmt.Println(file.Header)
+	fmt.Println(fileType)
+	fmt.Println(file.Size)
 
 	fileName := fmt.Sprintf("%v%v", uuid.NewString(), fileExt[fileType])
 	fileDest := fmt.Sprintf("uploads/%v/%v", dest, fileName)

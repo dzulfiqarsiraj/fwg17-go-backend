@@ -85,8 +85,6 @@ func CreateUser(data User) (User, error) {
 
 	result := User{}
 	rows, err := db.NamedQuery(sql, data)
-	fmt.Println(err)
-	fmt.Println(rows)
 
 	for rows.Next() {
 		rows.StructScan(&result)
