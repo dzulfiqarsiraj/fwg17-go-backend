@@ -128,6 +128,7 @@ func Register(c *gin.Context) {
 	}
 
 	form.Password = hashPassword.String()
+	form.Role = "Customer"
 
 	user, err := models.CreateUser(form)
 	if err != nil {

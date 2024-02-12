@@ -5,6 +5,7 @@ go 1.21.6
 require (
 	github.com/KEINOS/go-argonize v1.1.0
 	github.com/appleboy/gin-jwt/v2 v2.9.2
+	github.com/gin-contrib/cors v1.5.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.3.5

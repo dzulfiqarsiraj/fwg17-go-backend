@@ -13,11 +13,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ListAllProductSize(c *gin.Context) {
+func ListAllCategories(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "4"))
 	offset := (page - 1) * limit
-	result, err := models.FindAllProductSize(limit, offset)
+	result, err := models.FindAllCategories(limit, offset)
 
 	pageInfo := &services.PageInfo{
 		Page:      page,
@@ -37,22 +37,22 @@ func ListAllProductSize(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.ResponseList{
 		Success:  true,
-		Message:  "List All Product Size",
+		Message:  "List All Categories",
 		PageInfo: *pageInfo,
 		Results:  result.Data,
 	})
 }
 
-func DetailProductSize(c *gin.Context) {
+func DetailCategory(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	productSize, err := models.FindOneProductSize(id)
+	category, err := models.FindOneCategory(id)
 	if err != nil {
 		fmt.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusNotFound, &services.ResponseOnly{
 				Success: false,
-				Message: "Product Size Not Found",
+				Message: "Category Not Found",
 			})
 			return
 		}
@@ -65,36 +65,36 @@ func DetailProductSize(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Detail Product Size",
-		Results: productSize,
+		Message: "Detail Category",
+		Results: category,
 	})
 }
 
-func CreateProductSize(c *gin.Context) {
-	data := models.ProductSize{}
-	sizeInput := c.PostForm("size")
+func CreateCategory(c *gin.Context) {
+	data := models.Category{}
+	nameInput := c.PostForm("name")
 
-	if sizeInput == "" {
+	if nameInput == "" {
 		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 			Success: false,
-			Message: "Size Name Must Not Be Empty",
+			Message: "Name Must Not Be Empty",
 		})
 		return
 	}
-	existingProduct, _ := models.FindOneProductSizeBySize(sizeInput)
-	existingProductSize := existingProduct.Size
+	existingCategory, _ := models.FindOneCategoryByName(nameInput)
+	existingCategoryName := existingCategory.Name
 
-	if *existingProductSize == sizeInput {
+	if *existingCategoryName == nameInput {
 		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 			Success: false,
-			Message: "Product Size is Already Exist",
+			Message: "Category is Already Exist",
 		})
 		return
 	}
 
 	c.ShouldBind(&data)
 
-	productSize, err := models.CreateProductSize(data)
+	category, err := models.CreateCategory(data)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
@@ -105,46 +105,46 @@ func CreateProductSize(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Product Size Created Successfully",
-		Results: productSize,
+		Message: "Category Created Successfully",
+		Results: category,
 	})
 }
 
-func UpdateProductSize(c *gin.Context) {
+func UpdateCategory(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	sizeInput := c.PostForm("size")
+	nameInput := c.PostForm("name")
 
-	existingProductSize, err := models.FindOneProductSize(id)
+	existingCategory, err := models.FindOneCategory(id)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
-				Message: "Product Size Not Found",
+				Message: "Category Not Found",
 			})
 			return
 		}
-		fmt.Println(existingProductSize)
+		fmt.Println(existingCategory)
 	}
 
-	if sizeInput != "" {
-		existingProductSize, _ := models.FindOneProductSizeBySize(sizeInput)
+	if nameInput != "" {
+		existingCategory, _ := models.FindOneCategoryByName(nameInput)
 
-		if sizeInput == *existingProductSize.Size {
+		if nameInput == *existingCategory.Name {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
-				Message: "Size is Already Used",
+				Message: "Name is Already Used",
 			})
 			return
 		}
 	}
 
-	data := models.ProductSize{}
+	data := models.Category{}
 
 	c.ShouldBind(&data)
 
 	data.Id = id
 
-	productSize, err := models.UpdateProductSize(data)
+	category, err := models.UpdateCategory(data)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
@@ -156,15 +156,15 @@ func UpdateProductSize(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Update Product Size Succesfully",
-		Results: productSize,
+		Message: "Update Category Succesfully",
+		Results: category,
 	})
 }
 
-func DeleteProductSize(c *gin.Context) {
+func DeleteCategory(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	productSize, err := models.DeleteProductSize(id)
+	category, err := models.DeleteCategory(id)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusNotFound, &services.ResponseOnly{
@@ -182,7 +182,7 @@ func DeleteProductSize(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Delete Product Size Succesfully",
-		Results: productSize,
+		Message: "Delete Category Succesfully",
+		Results: category,
 	})
 }

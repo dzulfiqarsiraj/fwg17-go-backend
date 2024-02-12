@@ -114,6 +114,8 @@ func CreateUser(c *gin.Context) {
 			})
 			return
 		}
+	} else {
+		data.Role = "Customer"
 	}
 
 	c.ShouldBind(&data)
@@ -199,8 +201,6 @@ func UpdateUser(c *gin.Context) {
 		}
 	}
 
-	fmt.Println(*existingUser.Picture)
-
 	data := models.User{}
 
 	c.ShouldBind(&data)
@@ -238,10 +238,12 @@ func UpdateUser(c *gin.Context) {
 			return
 		}
 
-		fileName := *existingUser.Picture
-		fileDest := fmt.Sprintf("uploads/users/%v", fileName)
-		fmt.Println(fileDest)
-		os.Remove(fileDest)
+		if existingUser.Picture != nil {
+			fileName := *existingUser.Picture
+			fileDest := fmt.Sprintf("uploads/users/%v", fileName)
+			fmt.Println(fileDest)
+			os.Remove(fileDest)
+		}
 	}
 	// *upload file
 

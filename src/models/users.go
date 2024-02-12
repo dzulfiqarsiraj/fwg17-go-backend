@@ -18,7 +18,7 @@ type User struct {
 	FullName    *string    `db:"fullName" json:"fullName" form:"fullName"`
 	PhoneNumber *string    `db:"phoneNumber" json:"phoneNumber" form:"phoneNumber"`
 	Address     *string    `db:"address" json:"address" form:"address"`
-	Role        *string    `db:"role" json:"role" form:"role"`
+	Role        string     `db:"role" json:"role" form:"role"`
 	Picture     *string    `db:"picture" json:"picture"`
 	CreatedAt   *time.Time `db:"createdAt" json:"createdAt"`
 	UpdatedAt   *time.Time `db:"updatedAt" json:"updatedAt"`
@@ -85,6 +85,8 @@ func CreateUser(data User) (User, error) {
 
 	result := User{}
 	rows, err := db.NamedQuery(sql, data)
+	fmt.Println(rows)
+	fmt.Println(err)
 
 	for rows.Next() {
 		rows.StructScan(&result)

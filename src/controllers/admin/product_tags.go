@@ -13,11 +13,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ListAllProductSize(c *gin.Context) {
+func ListAllProductTags(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
 	offset := (page - 1) * limit
-	result, err := models.FindAllProductSize(limit, offset)
+	result, err := models.FindAllProductTags(limit, offset)
 
 	pageInfo := &services.PageInfo{
 		Page:      page,
@@ -37,22 +37,21 @@ func ListAllProductSize(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.ResponseList{
 		Success:  true,
-		Message:  "List All Product Size",
+		Message:  "List All Product Tags",
 		PageInfo: *pageInfo,
 		Results:  result.Data,
 	})
 }
 
-func DetailProductSize(c *gin.Context) {
+func DetailProductTag(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	productSize, err := models.FindOneProductSize(id)
+	productTag, err := models.FindOneProductTag(id)
 	if err != nil {
 		fmt.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusNotFound, &services.ResponseOnly{
 				Success: false,
-				Message: "Product Size Not Found",
+				Message: "Product Tag Not Found",
 			})
 			return
 		}
@@ -65,36 +64,17 @@ func DetailProductSize(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Detail Product Size",
-		Results: productSize,
+		Message: "Detail Product Tag",
+		Results: productTag,
 	})
 }
 
-func CreateProductSize(c *gin.Context) {
-	data := models.ProductSize{}
-	sizeInput := c.PostForm("size")
-
-	if sizeInput == "" {
-		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
-			Success: false,
-			Message: "Size Name Must Not Be Empty",
-		})
-		return
-	}
-	existingProduct, _ := models.FindOneProductSizeBySize(sizeInput)
-	existingProductSize := existingProduct.Size
-
-	if *existingProductSize == sizeInput {
-		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
-			Success: false,
-			Message: "Product Size is Already Exist",
-		})
-		return
-	}
+func CreateProductTag(c *gin.Context) {
+	data := models.ProductTag{}
 
 	c.ShouldBind(&data)
 
-	productSize, err := models.CreateProductSize(data)
+	productTag, err := models.CreateProductTag(data)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
@@ -105,46 +85,21 @@ func CreateProductSize(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Product Size Created Successfully",
-		Results: productSize,
+		Message: "Product Tag Created Succesfully",
+		Results: productTag,
 	})
 }
 
-func UpdateProductSize(c *gin.Context) {
+func UpdateProductTag(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-	sizeInput := c.PostForm("size")
 
-	existingProductSize, err := models.FindOneProductSize(id)
-	if err != nil {
-		if strings.HasPrefix(err.Error(), "sql: no rows") {
-			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
-				Success: false,
-				Message: "Product Size Not Found",
-			})
-			return
-		}
-		fmt.Println(existingProductSize)
-	}
-
-	if sizeInput != "" {
-		existingProductSize, _ := models.FindOneProductSizeBySize(sizeInput)
-
-		if sizeInput == *existingProductSize.Size {
-			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
-				Success: false,
-				Message: "Size is Already Used",
-			})
-			return
-		}
-	}
-
-	data := models.ProductSize{}
+	data := models.ProductTag{}
 
 	c.ShouldBind(&data)
 
 	data.Id = id
 
-	productSize, err := models.UpdateProductSize(data)
+	productTag, err := models.UpdateProductTag(data)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
@@ -156,15 +111,15 @@ func UpdateProductSize(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Update Product Size Succesfully",
-		Results: productSize,
+		Message: "Update Product Tag Succesfully",
+		Results: productTag,
 	})
 }
 
-func DeleteProductSize(c *gin.Context) {
+func DeleteProductTag(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	productSize, err := models.DeleteProductSize(id)
+	productTag, err := models.DeleteProductTag(id)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusNotFound, &services.ResponseOnly{
@@ -182,7 +137,7 @@ func DeleteProductSize(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Delete Product Size Succesfully",
-		Results: productSize,
+		Message: "Delete Product Tag Succesfully",
+		Results: productTag,
 	})
 }

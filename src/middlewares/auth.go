@@ -3,6 +3,7 @@ package middlewares
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/DzulfiqarSiraj/go-backend/src/models"
@@ -20,13 +21,15 @@ func Auth() (*jwt.GinJWTMiddleware, error) {
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			user := data.(*models.User)
 			return jwt.MapClaims{
-				"id": user.Id,
+				"id":   user.Id,
+				"role": user.Role,
 			}
 		},
 		IdentityHandler: func(c *gin.Context) interface{} {
 			claims := jwt.ExtractClaims(c)
 			return &models.User{
-				Id: int(claims["id"].(float64)),
+				Id:   int(claims["id"].(float64)),
+				Role: claims["role"].(string),
 			}
 		},
 		Authenticator: func(c *gin.Context) (interface{}, error) {
@@ -51,16 +54,31 @@ func Auth() (*jwt.GinJWTMiddleware, error) {
 
 			if decodedPassword.IsValidPassword(plainPassword) {
 				return &models.User{
-					Id: found.Id,
+					Id:   found.Id,
+					Role: found.Role,
 				}, nil
 			} else {
 				return nil, errors.New("invalid_password")
 			}
 		},
 		Authorizator: func(data interface{}, c *gin.Context) bool {
+			user := data.(*models.User)
+			if strings.HasPrefix(c.Request.URL.Path, "/admin") {
+				if user.Role != "Staff Administrator" {
+					return false
+				}
+			}
 			return true
 		},
 		Unauthorized: func(c *gin.Context, code int, message string) {
+			if strings.HasPrefix(c.Request.URL.Path, "/auth/login") {
+				c.JSON(http.StatusBadRequest, &services.ResponseOnly{
+					Success: false,
+					Message: "Wrong Email or Password",
+				})
+				return
+			}
+
 			c.JSON(http.StatusUnauthorized, &services.ResponseOnly{
 				Success: false,
 				Message: "Unauthorized",

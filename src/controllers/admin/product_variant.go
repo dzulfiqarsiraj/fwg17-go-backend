@@ -155,7 +155,7 @@ func UpdateProductVariant(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Update Producr Variant Succesfully",
+		Message: "Update Product Variant Succesfully",
 		Results: productVariant,
 	})
 }
