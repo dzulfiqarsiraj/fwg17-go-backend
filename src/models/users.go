@@ -29,15 +29,13 @@ func FindAllUsers(search string, orderBy string, limit int, offset int) (service
 	var sqlCount string
 	if search == "" {
 		sql = `SELECT * FROM "users"
-		ORDER BY $1 ASC
-		LIMIT $2
-		OFFSET $3`
+		ORDER BY "` + orderBy + `" ASC
+		LIMIT $1
+		OFFSET $2`
 		sqlCount = `SELECT COUNT(*) FROM "users"`
-		fmtOrder := fmt.Sprintf("%q", orderBy)
-		fmt.Println(fmtOrder)
 		result := services.Info{}
 		data := []User{}
-		db.Select(&data, sql, fmtOrder, limit, offset)
+		db.Select(&data, sql, limit, offset)
 		result.Data = data
 
 		row := db.QueryRow(sqlCount)
@@ -45,8 +43,9 @@ func FindAllUsers(search string, orderBy string, limit int, offset int) (service
 
 		return result, err
 	} else {
-		sql = `SELECT * FROM "users" 
+		sql = `SELECT * FROM "users"
 		WHERE "fullName" ILIKE $1
+		ORDER BY "` + orderBy + `" ASC
 		LIMIT $2
 		OFFSET $3`
 		sqlCount = `SELECT COUNT(*) FROM "users" WHERE "fullName" ILIKE $1`
