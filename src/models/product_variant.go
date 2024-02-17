@@ -9,7 +9,6 @@ import (
 type ProductVariant struct {
 	Id              int        `db:"id" json:"id"`
 	Name            *string    `db:"name" json:"name" form:"name"`
-	ProductId       *int       `db:"productId" json:"productId" form:"productId"`
 	AdditionalPrice *int       `db:"additionalPrice" json:"additionalPrice" form:"additionalPrice"`
 	CreatedAt       *time.Time `db:"createdAt" json:"createdAt"`
 	UpdatedAt       *time.Time `db:"updatedAt" json:"updatedAt"`
@@ -63,8 +62,7 @@ func UpdateProductVariant(data ProductVariant) (ProductVariant, error) {
 	sql := `
 	UPDATE "productVariant" SET
 	"name"=COALESCE(NULLIF(:name,''),"name"),
-	"productId"=COALESCE(NULLIF(:productId,0),"productId"),
-	"additionalPrice"=COALESCE(NULLIF(:additionalPrice,0),"additionalPrice"),
+	"additionalPrice"=COALESCE(:additionalPrice,"additionalPrice"),
 	"updatedAt"=NOW()
 	WHERE id = :id
 	RETURNING *
