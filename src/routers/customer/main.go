@@ -9,4 +9,5 @@ func Combine(r *gin.RouterGroup) {
 	authMiddleware, _ := middlewares.Auth()
 	r.Use(authMiddleware.MiddlewareFunc())
 	ProfileRouter(r.Group("/profile"))
+	ProductRouter(r.Group("/products"))
 }
