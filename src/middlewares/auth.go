@@ -3,6 +3,7 @@ package middlewares
 import (
 	"errors"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -11,12 +12,14 @@ import (
 	"github.com/KEINOS/go-argonize"
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func Auth() (*jwt.GinJWTMiddleware, error) {
+	godotenv.Load()
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:       "go-backend",
-		Key:         []byte("secret"),
+		Key:         []byte(os.Getenv("APP_SECRET")),
 		IdentityKey: "id",
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			user := data.(*models.User)
@@ -63,6 +66,12 @@ func Auth() (*jwt.GinJWTMiddleware, error) {
 		},
 		Authorizator: func(data interface{}, c *gin.Context) bool {
 			user := data.(*models.User)
+			if strings.HasPrefix(c.Request.URL.Path, "/customer") {
+				if user.Role != "Customer" {
+					return false
+				}
+			}
+
 			if strings.HasPrefix(c.Request.URL.Path, "/admin") {
 				if user.Role != "Staff Administrator" {
 					return false
