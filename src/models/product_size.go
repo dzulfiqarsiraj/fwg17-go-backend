@@ -10,7 +10,6 @@ import (
 type ProductSize struct {
 	Id              int        `db:"id" json:"id"`
 	Size            *string    `db:"size" json:"size" form:"size"`
-	ProductId       *int       `db:"productId" json:"productId" form:"productId"`
 	AdditionalPrice *int       `db:"additionalPrice" json:"additionalPrice" form:"additionalPrice"`
 	CreatedAt       *time.Time `db:"createdAt" json:"createdAt"`
 	UpdatedAt       *time.Time `db:"updatedAt" json:"updatedAt"`
@@ -48,8 +47,8 @@ func FindOneProductSizeBySize(size string) (ProductSize, error) {
 
 func CreateProductSize(data ProductSize) (ProductSize, error) {
 	sql := `
-	INSERT INTO "productSize" ("size","productId","additionalPrice") VALUES
-	(:size, :productId, :additionalPrice)
+	INSERT INTO "productSize" ("size","additionalPrice") VALUES
+	(:size, :additionalPrice)
 	RETURNING *`
 
 	result := ProductSize{}
@@ -65,8 +64,7 @@ func UpdateProductSize(data ProductSize) (ProductSize, error) {
 	sql := `
 	UPDATE "productSize" SET
 	"size"=COALESCE(NULLIF(:size,''),"size"),
-	"productId"=COALESCE(NULLIF(:productId,0),"productId"),
-	"additionalPrice"=COALESCE(NULLIF(:additionalPrice,0),"additionalPrice"),
+	"additionalPrice"=COALESCE(:additionalPrice,"additionalPrice"),
 	"updatedAt"=NOW()
 	WHERE id = :id
 	RETURNING *

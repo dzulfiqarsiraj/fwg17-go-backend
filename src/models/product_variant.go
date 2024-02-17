@@ -46,8 +46,8 @@ func FindOneProductVariantByName(name string) (ProductVariant, error) {
 
 func CreateProductVariant(data ProductVariant) (ProductVariant, error) {
 	sql := `
-	INSERT INTO "productVariant" ("name","productId","additionalPrice") VALUES
-	(:name, :productId, :additionalPrice)
+	INSERT INTO "productVariant" ("name","additionalPrice") VALUES
+	(:name, :additionalPrice)
 	RETURNING *`
 
 	result := ProductVariant{}
