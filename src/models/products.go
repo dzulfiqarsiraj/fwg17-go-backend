@@ -19,18 +19,20 @@ type Product struct {
 	UpdatedAt    *time.Time `db:"updatedAt" json:"updatedAt"`
 }
 
-func FindAllProducts(limit int, offset int) (services.Info, error) {
-	sql := `SELECT * FROM "products" 
-	ORDER BY "id" ASC
-	LIMIT $1
-	OFFSET $2`
-	sqlCount := `SELECT COUNT(*) FROM "products"`
+func FindAllProducts(search string, orderBy string, limit int, offset int) (services.Info, error) {
+	sql := `SELECT * FROM "products"
+	WHERE "name" ILIKE $1
+	ORDER BY "` + orderBy + `" ASC
+	LIMIT $2
+	OFFSET $3`
+	sqlCount := `SELECT COUNT(*) FROM "products" WHERE "name" ILIKE $1`
+	fmtSearch := fmt.Sprintf("%%%v%%", search)
 	result := services.Info{}
 	data := []Product{}
-	db.Select(&data, sql, limit, offset)
+	db.Select(&data, sql, fmtSearch, limit, offset)
 	result.Data = data
 
-	row := db.QueryRow(sqlCount)
+	row := db.QueryRow(sqlCount, fmtSearch)
 	err := row.Scan(&result.Count)
 	return result, err
 }
