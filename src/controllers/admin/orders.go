@@ -14,10 +14,12 @@ import (
 )
 
 func ListAllOrders(c *gin.Context) {
+	data := c.MustGet("id").(*models.User)
+	userId := data.Id
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "4"))
 	offset := (page - 1) * limit
-	result, err := models.FindAllOrders(limit, offset)
+	result, err := models.FindAllOrders(userId, limit, offset)
 
 	pageInfo := &services.PageInfo{
 		Page:      page,

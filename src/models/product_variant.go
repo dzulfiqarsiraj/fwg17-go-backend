@@ -44,6 +44,13 @@ func FindOneProductVariantByName(name string) (ProductVariant, error) {
 	return data, err
 }
 
+func FindProductVariantNameById(id int) (ProductVariant, error) {
+	sql := `SELECT "name" FROM "productVariant" WHERE "id" = $1`
+	data := ProductVariant{}
+	err := db.Get(&data, sql, id)
+	return data, err
+}
+
 func CreateProductVariant(data ProductVariant) (ProductVariant, error) {
 	sql := `
 	INSERT INTO "productVariant" ("name","additionalPrice") VALUES

@@ -45,6 +45,13 @@ func FindOneProductSizeBySize(size string) (ProductSize, error) {
 	return data, err
 }
 
+func FindProductSizeById(id int) (ProductSize, error) {
+	sql := `SELECT "size" FROM "productSize" WHERE "id" = $1`
+	data := ProductSize{}
+	err := db.Get(&data, sql, id)
+	return data, err
+}
+
 func CreateProductSize(data ProductSize) (ProductSize, error) {
 	sql := `
 	INSERT INTO "productSize" ("size","additionalPrice") VALUES

@@ -51,6 +51,13 @@ func FindOneProductByName(name string) (Product, error) {
 	return data, err
 }
 
+func FindProductNameById(id int) (Product, error) {
+	sql := `SELECT "name" FROM "products" WHERE "id" = $1`
+	data := Product{}
+	err := db.Get(&data, sql, id)
+	return data, err
+}
+
 func CreateProduct(data Product) (Product, error) {
 	sql := `
 	INSERT INTO "products" ("name","basePrice","description","image","discount","isBestSeller") VALUES

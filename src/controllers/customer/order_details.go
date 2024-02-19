@@ -1,4 +1,4 @@
-package admin_controllers
+package customer_controllers
 
 import (
 	"fmt"
@@ -28,6 +28,9 @@ func ListAllOrderDetails(c *gin.Context) {
 		TotalPage: int(math.Ceil(float64(result.Count) / float64(limit))),
 		TotalData: result.Count,
 	}
+
+	lastOrderId, _ := models.FindMaxIdOrder()
+	fmt.Println(&lastOrderId.Max)
 
 	if err != nil {
 		log.Fatalln(err)
@@ -76,32 +79,33 @@ func DetailOrderDetail(c *gin.Context) {
 func CreateOrderDetail(c *gin.Context) {
 	data := models.OrderDetail{}
 
-	existingOrderDetail, err := models.FindOneOrderDetail(data.Id)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
-			Success: false,
-			Message: "Order Detail is Already Exist",
-		})
-		return
-	} else {
-		fmt.Println(existingOrderDetail)
-	}
-
 	c.ShouldBind(&data)
 
-	orderDetail, err := models.CreateOrderDetail(data)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
-			Success: false,
-			Message: "Internal Server Error",
-		})
-		return
-	}
+	orderDetail, _ := models.CreateOrderDetail(data)
+
+	newOrderDetail, _ := models.FindOneOrderDetail(orderDetail.Id)
+	product, _ := models.FindOneProduct(*newOrderDetail.ProductId)
+	productSize, _ := models.FindOneProductSize(*newOrderDetail.ProductSizeId)
+	productVariant, _ := models.FindOneProductVariant(*newOrderDetail.ProductVariantId)
+
+	additionalPrice := *productSize.AdditionalPrice + *productVariant.AdditionalPrice
+	totalPrice := (*product.BasePrice + additionalPrice) * *newOrderDetail.Quantity
+
+	cart := models.Cart{}
+
+	cart.ProductName = product.Name
+	cart.OrderDetailId = newOrderDetail.Id
+	cart.ProductSize = productSize.Size
+	cart.ProductVariant = productVariant.Name
+	cart.Quantity = newOrderDetail.Quantity
+	cart.AdditionalPrice = &additionalPrice
+	cart.Total = &totalPrice
+
+	models.CreateCart(cart)
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Order Detail Created Successfully",
+		Message: "Create Order Detail Successfully",
 		Results: orderDetail,
 	})
 }

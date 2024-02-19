@@ -1,4 +1,4 @@
-package admin_controllers
+package customer_controllers
 
 import (
 	"fmt"
@@ -7,20 +7,20 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/DzulfiqarSiraj/go-backend/src/models"
 	"github.com/DzulfiqarSiraj/go-backend/src/services"
 	"github.com/gin-gonic/gin"
 )
 
-func ListAllOrderDetails(c *gin.Context) {
+func ListAllOrders(c *gin.Context) {
 	data := c.MustGet("id").(*models.User)
 	userId := data.Id
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "4"))
-	orderId := c.DefaultQuery("orderId", "")
 	offset := (page - 1) * limit
-	result, err := models.FindAllOrderDetails(userId, orderId, limit, offset)
+	result, err := models.FindAllOrders(userId, limit, offset)
 
 	pageInfo := &services.PageInfo{
 		Page:      page,
@@ -40,22 +40,22 @@ func ListAllOrderDetails(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.ResponseList{
 		Success:  true,
-		Message:  "List All Order Details",
+		Message:  "List All Orders",
 		PageInfo: *pageInfo,
 		Results:  result.Data,
 	})
 }
 
-func DetailOrderDetail(c *gin.Context) {
+func DetailOrder(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	orderDetail, err := models.FindOneOrderDetail(id)
+	order, err := models.FindOneOrder(id)
 	if err != nil {
 		fmt.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusNotFound, &services.ResponseOnly{
 				Success: false,
-				Message: "Order Detail Not Found",
+				Message: "Order Not Found",
 			})
 			return
 		}
@@ -68,29 +68,78 @@ func DetailOrderDetail(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Detail Order Detail",
-		Results: orderDetail,
+		Message: "Detail Order",
+		Results: order,
 	})
 }
 
-func CreateOrderDetail(c *gin.Context) {
-	data := models.OrderDetail{}
+func CreateOrder(c *gin.Context) {
+	data := models.Order{}
+	user := c.MustGet("id").(*models.User)
+	userId := user.Id
+	fmt.Println(userId)
+	fullNameInput := c.PostForm("fullName")
+	emailInput := c.PostForm("email")
 
-	existingOrderDetail, err := models.FindOneOrderDetail(data.Id)
-
+	cartInfo, err := models.TotalPrice()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 			Success: false,
-			Message: "Order Detail is Already Exist",
+			Message: "No Product in Cart",
+		})
+	}
+
+	if fullNameInput == "" {
+		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
+			Success: false,
+			Message: "Name Must Not Be Empty",
 		})
 		return
-	} else {
-		fmt.Println(existingOrderDetail)
 	}
+
+	if emailInput == "" {
+		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
+			Success: false,
+			Message: "Email Must Not Be Empty",
+		})
+		return
+	}
+
+	orderTime := time.DateOnly
+
+	data.OrderNumber = &orderTime
+
+	// Total Price Count
+	plainPrice := float64(cartInfo.TotalPrice)
+	tax := 0.1
+	taxPrice := plainPrice * tax
+	total := plainPrice + taxPrice
+	// ~Total Price Count
 
 	c.ShouldBind(&data)
 
-	orderDetail, err := models.CreateOrderDetail(data)
+	data.UserId = &userId
+	data.Tax = &tax
+	data.Total = &total
+
+	order, err := models.CreateOrder(data)
+
+	// Update orderNumber
+	orderNew := models.Order{}
+	orderNumber := fmt.Sprintf(`#INV-%v-%v`, order.Id, time.DateOnly)
+
+	orderNew.Id = order.Id
+	orderNew.OrderNumber = &orderNumber
+
+	models.UpdateOrderNumber(orderNew)
+
+	// Update orderId at order details
+	orderDetails := models.OrderDetail{}
+
+	orderDetails.OrderId = &order.Id
+
+	models.UpdateOrderDetailByOrderId(orderDetails)
+	models.DeleteAllCart()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
@@ -101,33 +150,33 @@ func CreateOrderDetail(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Order Detail Created Successfully",
-		Results: orderDetail,
+		Message: "Order Created Successfully",
+		Results: order,
 	})
 }
 
-func UpdateOrderDetail(c *gin.Context) {
+func UpdateOrder(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	existingOrderDetail, err := models.FindOneOrderDetail(id)
+	existingOrder, err := models.FindOneOrder(id)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
-				Message: "Order Detail Not Found",
+				Message: "Order Not Found",
 			})
 			return
 		}
-		fmt.Println(existingOrderDetail)
+		fmt.Println(existingOrder)
 	}
 
-	data := models.OrderDetail{}
+	data := models.Order{}
 
 	c.ShouldBind(&data)
 
 	data.Id = id
 
-	orderDetail, err := models.UpdateOrderDetail(data)
+	order, err := models.UpdateOrder(data)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
@@ -139,15 +188,15 @@ func UpdateOrderDetail(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Update Order Detail Succesfully",
-		Results: orderDetail,
+		Message: "Update Order Succesfully",
+		Results: order,
 	})
 }
 
-func DeleteOrderDetail(c *gin.Context) {
+func DeleteOrder(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	orderDetail, err := models.DeleteOrderDetail(id)
+	order, err := models.DeleteOrder(id)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusNotFound, &services.ResponseOnly{
@@ -165,7 +214,7 @@ func DeleteOrderDetail(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Delete Order Detail Succesfully",
-		Results: orderDetail,
+		Message: "Delete Order Succesfully",
+		Results: order,
 	})
 }

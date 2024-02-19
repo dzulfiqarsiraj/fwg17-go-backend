@@ -18,12 +18,36 @@ type OrderDetail struct {
 	UpdatedAt        *time.Time `db:"updatedAt" json:"updatedAt"`
 }
 
-func FindAllOrderDetails(limit int, offset int) (services.Info, error) {
-	sql := `SELECT * FROM "orderDetails" 
-	ORDER BY "id" ASC
-	LIMIT $1
-	OFFSET $2`
-	sqlCount := `SELECT COUNT(*) FROM "orderDetails"`
+func FindAllOrderDetails(userId int, orderId string, limit int, offset int) (services.Info, error) {
+	fmtUserId := fmt.Sprintf(`%v`, userId)
+	var sql string
+	var sqlCount string
+	if orderId != "" {
+		sql = `SELECT "od"."id","od"."productId","od"."productSizeId","od"."productVariantId","od"."quantity","od"."orderId","od"."createdAt","od"."updatedAt" 
+		FROM "orderDetails" AS "od"
+		JOIN "orders" AS "o" ON "o"."id"="od"."orderId"
+		WHERE "od"."orderId" = ` + orderId + ` AND "o"."userId" = ` + fmtUserId + `
+		ORDER BY "id" ASC
+		LIMIT $1
+		OFFSET $2`
+		sqlCount = `SELECT COUNT("od"."id") 
+		FROM "orderDetails" AS "od"
+		JOIN "orders" AS "o" ON "o"."id"="od"."orderId"
+		WHERE "od"."orderId" = ` + orderId + ` AND "o"."userId" = ` + fmtUserId
+	} else {
+		sql = `SELECT "od"."id","od"."productId","od"."productSizeId","od"."productVariantId","od"."quantity","od"."orderId","od"."createdAt","od"."updatedAt" 
+		FROM "orderDetails" AS "od"
+		JOIN "orders" AS "o" ON "o"."id"="od"."orderId"
+		WHERE "o"."userId" = ` + fmtUserId + `
+		ORDER BY "id" ASC
+		LIMIT $1
+		OFFSET $2`
+		sqlCount = `SELECT COUNT("od"."id") 
+		FROM "orderDetails" AS "od"
+		JOIN "orders" AS "o" ON "o"."id"="od"."orderId"
+		WHERE "o"."userId" = ` + fmtUserId
+	}
+
 	result := services.Info{}
 	data := []OrderDetail{}
 	db.Select(&data, sql, limit, offset)
@@ -80,8 +104,28 @@ func UpdateOrderDetail(data OrderDetail) (OrderDetail, error) {
 	return result, err
 }
 
+func UpdateOrderDetailByOrderId(data OrderDetail) (OrderDetail, error) {
+	sql := `
+	UPDATE "orderDetails" SET
+	"orderId"=COALESCE(NULLIF(:orderId,0),"orderId"),
+	"updatedAt"=NOW()
+	WHERE "orderId" IS NULL
+	RETURNING *
+	`
+	result := OrderDetail{}
+	rows, err := db.NamedQuery(sql, data)
+	fmt.Println(sql)
+	fmt.Println(rows)
+	fmt.Println(err)
+
+	for rows.Next() {
+		rows.StructScan(&result)
+	}
+	return result, err
+}
+
 func DeleteOrderDetail(id int) (OrderDetail, error) {
-	sql := `DELETE FROM "orderDetailss" WHERE "id" = $1 RETURNING *`
+	sql := `DELETE FROM "orderDetails" WHERE "id" = $1 RETURNING *`
 	data := OrderDetail{}
 	err := db.Get(&data, sql, id)
 	return data, err

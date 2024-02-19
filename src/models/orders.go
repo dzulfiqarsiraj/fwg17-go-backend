@@ -15,19 +15,25 @@ type Order struct {
 	Email           *string    `db:"email" json:"email" form:"email"`
 	PromoId         *int       `db:"promoId" json:"promoId" form:"promoId"`
 	Tax             *float64   `db:"tax" json:"tax" form:"tax"`
-	Total           *int       `db:"total" json:"total" form:"total"`
+	Total           *float64   `db:"total" json:"total" form:"total"`
 	DeliveryAddress *string    `db:"deliveryAddress" json:"deliveryAddress" form:"deliveryAddress"`
 	Status          *string    `db:"status" json:"status" form:"status"`
 	CreatedAt       *time.Time `db:"createdAt" json:"createdAt"`
 	UpdatedAt       *time.Time `db:"updatedAt" json:"updatedAt"`
 }
 
-func FindAllOrders(limit int, offset int) (services.Info, error) {
-	sql := `SELECT * FROM "orders" 
+type MaxId struct {
+	Max *int
+}
+
+func FindAllOrders(userId int, limit int, offset int) (services.Info, error) {
+	fmtUserId := fmt.Sprintf(`%v`, userId)
+	sql := `SELECT * FROM "orders"
+	WHERE "userId" = ` + fmtUserId + `
 	ORDER BY "id" ASC
 	LIMIT $1
 	OFFSET $2`
-	sqlCount := `SELECT COUNT(*) FROM "orders"`
+	sqlCount := `SELECT COUNT(*) FROM "orders" WHERE "userId" = ` + fmtUserId
 	result := services.Info{}
 	data := []Order{}
 	db.Select(&data, sql, limit, offset)
@@ -45,6 +51,14 @@ func FindOneOrder(id int) (Order, error) {
 	return data, err
 }
 
+func FindMaxIdOrder() (MaxId, error) {
+	sql := `SELECT MAX("id") FROM "orders"`
+	result := MaxId{}
+	row := db.QueryRow(sql)
+	err := row.Scan(&result.Max)
+	return result, err
+}
+
 func FindOneOrderByOrderNumber(orderNumber string) (Order, error) {
 	sql := `SELECT * FROM "orders" WHERE "orderNumber"=$1`
 	data := Order{}
@@ -55,7 +69,7 @@ func FindOneOrderByOrderNumber(orderNumber string) (Order, error) {
 func CreateOrder(data Order) (Order, error) {
 	sql := `
 	INSERT INTO "orders" ("userId","orderNumber","fullName","email","promoId","tax","total","deliveryAddress","status") VALUES
-	(:userId,:orderNumber,:fullName,:email,:promoId,:tax,:total,:deliveryAddress,:status)
+	(:userId,:orderNumber,:fullName,:email,:promoId,:tax,:total,:deliveryAddress,COALESCE(:status,'On Process'))
 	RETURNING *`
 
 	result := Order{}
@@ -88,6 +102,20 @@ func UpdateOrder(data Order) (Order, error) {
 	fmt.Println(sql)
 	fmt.Println(rows)
 	fmt.Println(err)
+
+	for rows.Next() {
+		rows.StructScan(&result)
+	}
+	return result, err
+}
+
+func UpdateOrderNumber(data Order) (Order, error) {
+	sql := `UPDATE "orders" SET 
+	"orderNumber" = :orderNumber
+	WHERE "id" = :id
+	RETURNING *`
+	result := Order{}
+	rows, err := db.NamedQuery(sql, data)
 
 	for rows.Next() {
 		rows.StructScan(&result)
