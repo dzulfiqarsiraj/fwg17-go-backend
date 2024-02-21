@@ -29,7 +29,7 @@ func FindAllOrderDetails(userId int, limit int, offset int) (services.Info, erro
 	OFFSET $2`
 	sqlCount := `SELECT COUNT(*) 
 	FROM "orderDetails"
-	WHERE "userId" = ` + fmtUserId
+	WHERE "userId" = ` + fmtUserId + ` AND "orderId" IS NOT NULL`
 
 	result := services.Info{}
 	data := []OrderDetail{}

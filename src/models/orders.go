@@ -69,7 +69,7 @@ func FindOneOrderByOrderNumber(orderNumber string) (Order, error) {
 func CreateOrder(data Order) (Order, error) {
 	sql := `
 	INSERT INTO "orders" ("userId","orderNumber","fullName","email","promoId","tax","total","deliveryAddress","status") VALUES
-	(:userId,:orderNumber,:fullName,:email,:promoId,:tax,:total,:deliveryAddress,COALESCE(:status,'On Process'))
+	(:userId,:orderNumber,:fullName,:email,:promoId,:tax,:total,:deliveryAddress,COALESCE(:status,'Waiting Payment'))
 	RETURNING *`
 
 	result := Order{}
