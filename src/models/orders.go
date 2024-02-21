@@ -30,7 +30,7 @@ func FindAllOrders(userId int, limit int, offset int) (services.Info, error) {
 	fmtUserId := fmt.Sprintf(`%v`, userId)
 	sql := `SELECT * FROM "orders"
 	WHERE "userId" = ` + fmtUserId + `
-	ORDER BY "id" ASC
+	ORDER BY "id" DESC
 	LIMIT $1
 	OFFSET $2`
 	sqlCount := `SELECT COUNT(*) FROM "orders" WHERE "userId" = ` + fmtUserId

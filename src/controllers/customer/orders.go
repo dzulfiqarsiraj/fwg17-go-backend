@@ -77,11 +77,11 @@ func CreateOrder(c *gin.Context) {
 	data := models.Order{}
 	user := c.MustGet("id").(*models.User)
 	userId := user.Id
-	fmt.Println(userId)
+
 	fullNameInput := c.PostForm("fullName")
 	emailInput := c.PostForm("email")
 
-	cartInfo, err := models.TotalPrice()
+	cartInfo, err := models.TotalPrice(userId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 			Success: false,
@@ -138,8 +138,8 @@ func CreateOrder(c *gin.Context) {
 
 	orderDetails.OrderId = &order.Id
 
-	models.UpdateOrderDetailByOrderId(orderDetails)
-	models.DeleteAllCart()
+	models.UpdateOrderDetailByOrderId(userId, orderDetails)
+	models.DeleteAllCart(userId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
