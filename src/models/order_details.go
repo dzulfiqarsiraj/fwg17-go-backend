@@ -14,39 +14,22 @@ type OrderDetail struct {
 	ProductVariantId *int       `db:"productVariantId" json:"productVariantId" form:"productVariantId"`
 	Quantity         *int       `db:"quantity" json:"quantity" form:"quantity"`
 	OrderId          *int       `db:"orderId" json:"orderId" form:"orderId"`
+	UserId           *int       `db:"userId" json:"userId" form:"userId"`
 	CreatedAt        *time.Time `db:"createdAt" json:"createdAt"`
 	UpdatedAt        *time.Time `db:"updatedAt" json:"updatedAt"`
 }
 
-func FindAllOrderDetails(userId int, orderId string, limit int, offset int) (services.Info, error) {
+func FindAllOrderDetails(userId int, limit int, offset int) (services.Info, error) {
 	fmtUserId := fmt.Sprintf(`%v`, userId)
-	var sql string
-	var sqlCount string
-	if orderId != "" {
-		sql = `SELECT "od"."id","od"."productId","od"."productSizeId","od"."productVariantId","od"."quantity","od"."orderId","od"."createdAt","od"."updatedAt" 
-		FROM "orderDetails" AS "od"
-		JOIN "orders" AS "o" ON "o"."id"="od"."orderId"
-		WHERE "od"."orderId" = ` + orderId + ` AND "o"."userId" = ` + fmtUserId + `
-		ORDER BY "id" ASC
-		LIMIT $1
-		OFFSET $2`
-		sqlCount = `SELECT COUNT("od"."id") 
-		FROM "orderDetails" AS "od"
-		JOIN "orders" AS "o" ON "o"."id"="od"."orderId"
-		WHERE "od"."orderId" = ` + orderId + ` AND "o"."userId" = ` + fmtUserId
-	} else {
-		sql = `SELECT "od"."id","od"."productId","od"."productSizeId","od"."productVariantId","od"."quantity","od"."orderId","od"."createdAt","od"."updatedAt" 
-		FROM "orderDetails" AS "od"
-		JOIN "orders" AS "o" ON "o"."id"="od"."orderId"
-		WHERE "o"."userId" = ` + fmtUserId + `
-		ORDER BY "id" ASC
-		LIMIT $1
-		OFFSET $2`
-		sqlCount = `SELECT COUNT("od"."id") 
-		FROM "orderDetails" AS "od"
-		JOIN "orders" AS "o" ON "o"."id"="od"."orderId"
-		WHERE "o"."userId" = ` + fmtUserId
-	}
+	sql := `SELECT * 
+	FROM "orderDetails"
+	WHERE "userId" = ` + fmtUserId + ` AND "orderId" IS NOT NULL
+	ORDER BY "id" ASC
+	LIMIT $1
+	OFFSET $2`
+	sqlCount := `SELECT COUNT(*) 
+	FROM "orderDetails"
+	WHERE "userId" = ` + fmtUserId
 
 	result := services.Info{}
 	data := []OrderDetail{}
@@ -58,17 +41,17 @@ func FindAllOrderDetails(userId int, orderId string, limit int, offset int) (ser
 	return result, err
 }
 
-func FindOneOrderDetail(id int) (OrderDetail, error) {
-	sql := `SELECT * FROM "orderDetails" WHERE "id"=$1`
+func FindOneOrderDetail(id int, userId int) (OrderDetail, error) {
+	sql := `SELECT * FROM "orderDetails" WHERE "id"=$1 AND "userId"=$2`
 	data := OrderDetail{}
-	err := db.Get(&data, sql, id)
+	err := db.Get(&data, sql, id, userId)
 	return data, err
 }
 
 func CreateOrderDetail(data OrderDetail) (OrderDetail, error) {
 	sql := `
-	INSERT INTO "orderDetails" ("productId","productSizeId","productVariantId","quantity","orderId") VALUES
-	(:productId, :productSizeId, :productVariantId, :quantity, :orderId)
+	INSERT INTO "orderDetails" ("productId","productSizeId","productVariantId","quantity","orderId","userId") VALUES
+	(:productId, :productSizeId, :productVariantId, :quantity, :orderId, :userId)
 	RETURNING *`
 
 	result := OrderDetail{}
@@ -89,7 +72,7 @@ func UpdateOrderDetail(data OrderDetail) (OrderDetail, error) {
 	"quantity"=COALESCE(NULLIF(:quantity,0),"quantity"),
 	"orderId"=COALESCE(NULLIF(:orderId,0),"orderId"),
 	"updatedAt"=NOW()
-	WHERE id = :id
+	WHERE "productId" = :productId AND "userId" = :userId
 	RETURNING *
 	`
 	result := OrderDetail{}
@@ -104,12 +87,13 @@ func UpdateOrderDetail(data OrderDetail) (OrderDetail, error) {
 	return result, err
 }
 
-func UpdateOrderDetailByOrderId(data OrderDetail) (OrderDetail, error) {
+func UpdateOrderDetailByOrderId(userId int, data OrderDetail) (OrderDetail, error) {
+	fmtUserId := fmt.Sprintf(`%v`, userId)
 	sql := `
 	UPDATE "orderDetails" SET
 	"orderId"=COALESCE(NULLIF(:orderId,0),"orderId"),
 	"updatedAt"=NOW()
-	WHERE "orderId" IS NULL
+	WHERE "orderId" IS NULL AND "userId" = ` + fmtUserId + `
 	RETURNING *
 	`
 	result := OrderDetail{}
@@ -124,9 +108,11 @@ func UpdateOrderDetailByOrderId(data OrderDetail) (OrderDetail, error) {
 	return result, err
 }
 
-func DeleteOrderDetail(id int) (OrderDetail, error) {
-	sql := `DELETE FROM "orderDetails" WHERE "id" = $1 RETURNING *`
+func DeleteOrderDetail(productId int, userId int) (OrderDetail, error) {
+	sql := `DELETE FROM "orderDetails" 
+	WHERE "productId" = $1 AND "userId" = $2
+	RETURNING *`
 	data := OrderDetail{}
-	err := db.Get(&data, sql, id)
+	err := db.Get(&data, sql, productId, userId)
 	return data, err
 }
