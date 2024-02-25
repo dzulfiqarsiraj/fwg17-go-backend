@@ -81,6 +81,8 @@ func CreateOrder(c *gin.Context) {
 	fullNameInput := c.PostForm("fullName")
 	emailInput := c.PostForm("email")
 
+	promoIdInput, _ := strconv.Atoi(c.PostForm("promoId"))
+
 	cartInfo, err := models.TotalPrice(userId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
@@ -105,15 +107,61 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
+	dataPromo, err := models.FindOnePromo(promoIdInput)
+	if promoIdInput != 0 {
+		if err != nil {
+			c.JSON(http.StatusNotFound, &services.ResponseOnly{
+				Success: false,
+				Message: "Promo Not Found",
+			})
+			return
+		}
+	}
+
+	orderExpire := false
+
+	if dataPromo.IsExpired == &orderExpire {
+		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
+			Success: false,
+			Message: "Promo has Expired",
+		})
+		return
+	}
+
 	orderTime := time.DateOnly
 
 	data.OrderNumber = &orderTime
 
 	// Total Price Count
+	var total float64
 	plainPrice := float64(cartInfo.TotalPrice)
 	tax := 0.1
-	taxPrice := plainPrice * tax
-	total := plainPrice + taxPrice
+
+	if plainPrice < float64(*dataPromo.MinPurchase) {
+		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
+			Success: false,
+			Message: fmt.Sprintf(`Failed to Use Promo %v. Sub Total is Less Than %v`, dataPromo.Code, dataPromo.MinPurchase),
+		})
+		return
+	}
+
+	if promoIdInput == 0 {
+		tax := 0.1
+		taxPrice := plainPrice * tax
+		total = plainPrice + taxPrice
+	} else {
+		tempPrice := plainPrice * *dataPromo.Percentage
+		if tempPrice > float64(*dataPromo.MaxPromo) {
+			plainPrice -= float64(*dataPromo.MaxPromo)
+			taxPrice := plainPrice * tax
+			total = plainPrice + taxPrice
+		} else if tempPrice < float64(*dataPromo.MaxPromo) {
+			plainPrice -= tempPrice
+			taxPrice := plainPrice * tax
+			total = plainPrice + taxPrice
+		}
+	}
+
 	// ~Total Price Count
 
 	c.ShouldBind(&data)
@@ -126,7 +174,7 @@ func CreateOrder(c *gin.Context) {
 
 	// Update orderNumber
 	orderNew := models.Order{}
-	orderNumber := fmt.Sprintf(`#INV-%v-%v`, order.Id, time.DateOnly)
+	orderNumber := fmt.Sprintf(`#INV/%v/%v`, order.Id, time.Now().Format("20060102"))
 
 	orderNew.Id = order.Id
 	orderNew.OrderNumber = &orderNumber

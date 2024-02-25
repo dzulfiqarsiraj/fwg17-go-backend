@@ -18,9 +18,8 @@ func ListAllOrderDetails(c *gin.Context) {
 	userId := data.Id
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "4"))
-	orderId := c.DefaultQuery("orderId", "")
 	offset := (page - 1) * limit
-	result, err := models.FindAllOrderDetails(userId, orderId, limit, offset)
+	result, err := models.FindAllOrderDetails(userId, limit, offset)
 
 	pageInfo := &services.PageInfo{
 		Page:      page,
@@ -28,6 +27,9 @@ func ListAllOrderDetails(c *gin.Context) {
 		TotalPage: int(math.Ceil(float64(result.Count) / float64(limit))),
 		TotalData: result.Count,
 	}
+
+	lastOrderId, _ := models.FindMaxIdOrder()
+	fmt.Println(&lastOrderId.Max)
 
 	if err != nil {
 		log.Fatalln(err)
@@ -47,9 +49,11 @@ func ListAllOrderDetails(c *gin.Context) {
 }
 
 func DetailOrderDetail(c *gin.Context) {
+	data := c.MustGet("id").(*models.User)
+	userId := data.Id
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	orderDetail, err := models.FindOneOrderDetail(id)
+	orderDetail, err := models.FindOneOrderDetail(id, userId)
 	if err != nil {
 		fmt.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
@@ -73,43 +77,11 @@ func DetailOrderDetail(c *gin.Context) {
 	})
 }
 
-func CreateOrderDetail(c *gin.Context) {
-	data := models.OrderDetail{}
-
-	existingOrderDetail, err := models.FindOneOrderDetail(data.Id)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
-			Success: false,
-			Message: "Order Detail is Already Exist",
-		})
-		return
-	} else {
-		fmt.Println(existingOrderDetail)
-	}
-
-	c.ShouldBind(&data)
-
-	orderDetail, err := models.CreateOrderDetail(data)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
-			Success: false,
-			Message: "Internal Server Error",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, &services.Response{
-		Success: true,
-		Message: "Order Detail Created Successfully",
-		Results: orderDetail,
-	})
-}
-
 func UpdateOrderDetail(c *gin.Context) {
+	userId, _ := strconv.Atoi(c.PostForm("userId"))
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	existingOrderDetail, err := models.FindOneOrderDetail(id)
+	existingOrderDetail, err := models.FindOneOrderDetail(id, userId)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
@@ -145,9 +117,10 @@ func UpdateOrderDetail(c *gin.Context) {
 }
 
 func DeleteOrderDetail(c *gin.Context) {
+	userId, _ := strconv.Atoi(c.PostForm("userId"))
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	orderDetail, err := models.DeleteOrderDetail(id)
+	orderDetail, err := models.DeleteOrderDetail(id, userId)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusNotFound, &services.ResponseOnly{

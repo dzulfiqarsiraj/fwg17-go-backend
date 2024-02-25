@@ -13,4 +13,5 @@ func Combine(r *gin.RouterGroup) {
 	OrderDetailsRouter(r.Group("/order-details"))
 	OrdersRouter(r.Group("/orders"))
 	CartRouter(r.Group("/cart"))
+	PromoRouter(r.Group("promo"))
 }

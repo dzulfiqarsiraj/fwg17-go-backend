@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   web:
-    container_name: golang
+    container_name: be-golang
     build: .
     ports:
       - 8080:8888

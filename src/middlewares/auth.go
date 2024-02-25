@@ -90,7 +90,7 @@ func Auth() (*jwt.GinJWTMiddleware, error) {
 
 			c.JSON(http.StatusUnauthorized, &services.ResponseOnly{
 				Success: false,
-				Message: "Unauthorized",
+				Message: "Forbidden Access",
 			})
 		},
 		LoginResponse: func(c *gin.Context, code int, token string, time time.Time) {

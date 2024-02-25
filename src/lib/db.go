@@ -2,6 +2,7 @@ package lib
 
 import (
 	"log"
+	"os"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
@@ -10,7 +11,7 @@ import (
 
 func conn() *sqlx.DB {
 	godotenv.Load()
-	db, err := sqlx.Connect("postgres", "user=postgres dbname=go-coffee-shop password=1 sslmode=disable")
+	db, err := sqlx.Connect("postgres", os.Getenv("POSTGRES_URL"))
 	if err != nil {
 		log.Fatalln(err)
 	}

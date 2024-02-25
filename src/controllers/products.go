@@ -16,10 +16,11 @@ func ListAllProducts(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
 	search := c.DefaultQuery("search", "")
+	category := c.DefaultQuery("category", "")
 	orderBy := c.DefaultQuery("orderBy", "id")
 
 	offset := (page - 1) * limit
-	result, err := models.FindAllProducts(search, orderBy, limit, offset)
+	result, err := models.FindAllProducts(category, search, orderBy, limit, offset)
 
 	pageInfo := &services.PageInfo{
 		Page:      page,

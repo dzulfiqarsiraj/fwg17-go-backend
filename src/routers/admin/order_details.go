@@ -8,7 +8,6 @@ import (
 func OrderDetailsRouter(r *gin.RouterGroup) {
 	r.GET("", admin_controllers.ListAllOrderDetails)
 	r.GET("/:id", admin_controllers.DetailOrderDetail)
-	r.POST("", admin_controllers.CreateOrderDetail)
 	r.PATCH("/:id", admin_controllers.UpdateOrderDetail)
 	r.DELETE("/:id", admin_controllers.DeleteOrderDetail)
 }

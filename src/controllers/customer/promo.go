@@ -1,4 +1,4 @@
-package admin_controllers
+package customer_controllers
 
 import (
 	"fmt"
@@ -13,15 +13,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ListAllProducts(c *gin.Context) {
+func ListAllPromo(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
-	search := c.DefaultQuery("search", "")
-	category := c.DefaultQuery("category", "")
-	orderBy := c.DefaultQuery("orderBy", "id")
-
 	offset := (page - 1) * limit
-	result, err := models.FindAllProducts(category, search, orderBy, limit, offset)
+	result, err := models.FindAllPromo(limit, offset)
 
 	pageInfo := &services.PageInfo{
 		Page:      page,
@@ -41,22 +37,21 @@ func ListAllProducts(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.ResponseList{
 		Success:  true,
-		Message:  "List All Products",
+		Message:  "List All Promo",
 		PageInfo: *pageInfo,
 		Results:  result.Data,
 	})
 }
 
-func DetailProduct(c *gin.Context) {
+func DetailPromo(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
-
-	product, err := models.FindOneProduct(id)
+	promo, err := models.FindOnePromo(id)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusNotFound, &services.ResponseOnly{
 				Success: false,
-				Message: "Product Not Found",
+				Message: "Promo Not Found",
 			})
 			return
 		}
@@ -69,37 +64,36 @@ func DetailProduct(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Detail Product",
-		Results: product,
+		Message: "Detail Product Variant",
+		Results: promo,
 	})
 }
 
-func CreateProduct(c *gin.Context) {
-	data := models.Product{}
+func CreatePromo(c *gin.Context) {
+	data := models.Promo{}
 	nameInput := c.PostForm("name")
 
 	if nameInput == "" {
 		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 			Success: false,
-			Message: "Name Must Not Be Empty",
+			Message: "Promo Name Must Not Be Empty",
 		})
 		return
 	}
+	existingPromo, _ := models.FindOnePromoByName(nameInput)
+	existingPromoName := existingPromo.Name
 
-	existingProduct, _ := models.FindOneProductByName(nameInput)
-	existingProductName := existingProduct.Name
-
-	if *existingProductName == nameInput {
+	if *existingPromoName == nameInput {
 		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 			Success: false,
-			Message: "Product Name is Already Exist",
+			Message: "Promo is Already Exist",
 		})
 		return
 	}
 
 	c.ShouldBind(&data)
 
-	product, err := models.CreateProduct(data)
+	promo, err := models.CreatePromo(data)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
 			Success: false,
@@ -110,46 +104,46 @@ func CreateProduct(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Product Created Successfully",
-		Results: product,
+		Message: "Promo Created Succesfully",
+		Results: promo,
 	})
 }
 
-func UpdateProduct(c *gin.Context) {
+func UpdatePromo(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	nameInput := c.PostForm("name")
 
-	existingProduct, err := models.FindOneProduct(id)
+	existingPromo, err := models.FindOnePromo(id)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
-				Message: "Product Not Found",
+				Message: "Promo Not Found",
 			})
 			return
 		}
-		fmt.Println(existingProduct)
+		fmt.Println(existingPromo)
 	}
 
 	if nameInput != "" {
-		existingProduct, _ := models.FindOneProductByName(nameInput)
+		existingPromo, _ := models.FindOnePromoByName(nameInput)
 
-		if nameInput == *existingProduct.Name {
+		if nameInput == *existingPromo.Name {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
-				Message: "Name is Already Used",
+				Message: "Promo is Already Exist",
 			})
 			return
 		}
 	}
 
-	data := models.Product{}
+	data := models.Promo{}
 
 	c.ShouldBind(&data)
 
 	data.Id = id
 
-	product, err := models.UpdateProduct(data)
+	promo, err := models.UpdatePromo(data)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
@@ -161,15 +155,15 @@ func UpdateProduct(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Update Product Successfully",
-		Results: product,
+		Message: "Update Promo Succesfully",
+		Results: promo,
 	})
 }
 
-func DeleteProduct(c *gin.Context) {
+func DeletePromo(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	product, err := models.DeleteProduct(id)
+	promo, err := models.DeletePromo(id)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusNotFound, &services.ResponseOnly{
@@ -187,7 +181,7 @@ func DeleteProduct(c *gin.Context) {
 
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Delete Product Successfully",
-		Results: product,
+		Message: "Delete Product Variant Succesfully",
+		Results: promo,
 	})
 }

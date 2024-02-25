@@ -11,7 +11,6 @@ type Info struct {
 	Data  interface{}
 	Count int
 }
-
 type ResponseList struct {
 	Success  bool        `json:"success"`
 	Message  string      `json:"message"`

@@ -118,7 +118,7 @@ func UpdatePromo(c *gin.Context) {
 		if strings.HasPrefix(err.Error(), "sql: no rows") {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
-				Message: "Product Variant Not Found",
+				Message: "Promo Not Found",
 			})
 			return
 		}
