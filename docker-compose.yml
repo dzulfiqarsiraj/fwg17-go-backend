@@ -5,6 +5,8 @@ services:
     build: .
     ports:
       - 8090:8888
+    volumes:
+      - .:/app
     depends_on:
       - db
   db:
