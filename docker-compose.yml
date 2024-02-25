@@ -4,13 +4,13 @@ services:
     container_name: be-golang
     build: .
     ports:
-      - 8080:8888
+      - 8090:8888
     depends_on:
       - db
   db:
     image: postgres
     ports:
-      - 5433:5432
+      - 8091:5432
     environment:
       - POSTGRES_DB=go-coffee-shop
       - POSTGRES_PASSWORD=1

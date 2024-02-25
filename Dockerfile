@@ -6,6 +6,6 @@ COPY . .
 
 RUN go mod tidy
 
-EXPOSE 8080
+EXPOSE 8090
 
 CMD go run .
