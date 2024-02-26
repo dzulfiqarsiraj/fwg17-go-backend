@@ -1,4 +1,4 @@
-# Coffee Shop Go-Backend
+# Go-Backend Coffee Shop
 
 Welcome to the Coffee Shop Backend Web Project! This repository contains the back-end source code for the Online Coffee Shop web application. With Golang structure.
 
