@@ -57,7 +57,7 @@ To run the project locally, follow these simple steps:
 
 To run this project, you will need to add the following environment variables to your .env file
 
-`DATABASE_URL`
+`POSTGRES_URL`
 
 `APP_SECRET`
 
