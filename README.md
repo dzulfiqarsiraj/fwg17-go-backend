@@ -52,6 +52,13 @@ To run the project locally, follow these simple steps:
   go run .
 ```
 
+5. run the project using nodemon
+```sh
+  npm install nodemone
+```
+```sh
+  nodemon --exec go run main.go --signal SIGTERM
+
 
 ## Environment Variables
 
