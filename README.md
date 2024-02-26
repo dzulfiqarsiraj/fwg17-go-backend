@@ -58,6 +58,7 @@ To run the project locally, follow these simple steps:
 ```
 ```sh
   nodemon --exec go run main.go --signal SIGTERM
+```
 
 
 ## Environment Variables
