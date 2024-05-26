@@ -84,8 +84,6 @@ func CreateUser(data User) (User, error) {
 
 	result := User{}
 	rows, err := db.NamedQuery(sql, data)
-	fmt.Println(rows)
-	fmt.Println(err)
 
 	for rows.Next() {
 		rows.StructScan(&result)
@@ -103,7 +101,7 @@ func UpdateUser(data User) (User, error) {
 	"phoneNumber"=COALESCE(NULLIF(:phoneNumber,''), "phoneNumber"),
 	"address"=COALESCE(NULLIF(:address,''), "address"),
 	"role"=COALESCE(NULLIF(:role,''),"role"),
-	"picture"=COALESCE(NULLIF(:picture,''), "picture"),
+	"pictures"=COALESCE(NULLIF(:pictures,''), "pictures"),
 	"updatedAt"=NOW()
 	WHERE id=:id
 	RETURNING *
