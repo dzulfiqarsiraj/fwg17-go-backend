@@ -14,6 +14,7 @@ func main() {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"http://localhost:5173"},
 		AllowMethods: []string{"GET", "POST", "PATCH", "DELETE"},
+		AllowHeaders: []string{"Authorization, Content-Type, access-control-allow-origin, access-control-allow-headers"},
 	}))
 
 	routers.Combine(r)
@@ -23,5 +24,5 @@ func main() {
 			Message: "Resource Not Found...",
 		})
 	})
-	r.Run(":8888")
+	r.Run(":8080")
 }
