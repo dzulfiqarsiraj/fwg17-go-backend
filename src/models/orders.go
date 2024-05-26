@@ -15,9 +15,10 @@ type Order struct {
 	Email           *string    `db:"email" json:"email" form:"email"`
 	PromoId         *int       `db:"promoId" json:"promoId" form:"promoId"`
 	Tax             *float64   `db:"tax" json:"tax" form:"tax"`
-	Total           *float64   `db:"total" json:"total" form:"total"`
+	GrandTotal      *float64   `db:"grandTotal" json:"grandTotal" form:"grandTotal"`
 	DeliveryAddress *string    `db:"deliveryAddress" json:"deliveryAddress" form:"deliveryAddress"`
 	Status          *string    `db:"status" json:"status" form:"status"`
+	Shipping        *string    `db:"shipping" json:"shipping" form:"shipping"`
 	CreatedAt       *time.Time `db:"createdAt" json:"createdAt"`
 	UpdatedAt       *time.Time `db:"updatedAt" json:"updatedAt"`
 }
@@ -26,20 +27,19 @@ type MaxId struct {
 	Max *int
 }
 
-func FindAllOrders(userId int, limit int, offset int) (services.Info, error) {
-	fmtUserId := fmt.Sprintf(`%v`, userId)
+func FindAllOrders(userId int, status string, limit int, offset int) (services.Info, error) {
 	sql := `SELECT * FROM "orders"
-	WHERE "userId" = ` + fmtUserId + `
+	WHERE "userId" = $1 AND "status" = $2
 	ORDER BY "id" DESC
-	LIMIT $1
-	OFFSET $2`
-	sqlCount := `SELECT COUNT(*) FROM "orders" WHERE "userId" = ` + fmtUserId
+	LIMIT $3
+	OFFSET $4`
+	sqlCount := `SELECT COUNT(*) FROM "orders" WHERE "userId" = $1  AND "status" = $2`
 	result := services.Info{}
 	data := []Order{}
-	db.Select(&data, sql, limit, offset)
+	db.Select(&data, sql, userId, status, limit, offset)
 	result.Data = data
 
-	row := db.QueryRow(sqlCount)
+	row := db.QueryRow(sqlCount, userId, status)
 	err := row.Scan(&result.Count)
 	return result, err
 }
@@ -68,8 +68,8 @@ func FindOneOrderByOrderNumber(orderNumber string) (Order, error) {
 
 func CreateOrder(data Order) (Order, error) {
 	sql := `
-	INSERT INTO "orders" ("userId","orderNumber","fullName","email","promoId","tax","total","deliveryAddress","status") VALUES
-	(:userId,:orderNumber,:fullName,:email,:promoId,:tax,:total,:deliveryAddress,COALESCE(:status,'Waiting Payment'))
+	INSERT INTO "orders" ("userId","orderNumber","fullName","email","promoId","tax","grandTotal","deliveryAddress","status","shipping") VALUES
+	(:userId,:orderNumber,:fullName,:email,:promoId,:tax,:grandTotal,:deliveryAddress,COALESCE(:status,'Awaiting Payment'),:shipping)
 	RETURNING *`
 
 	result := Order{}
