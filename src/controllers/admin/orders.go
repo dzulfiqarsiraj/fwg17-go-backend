@@ -16,16 +16,17 @@ import (
 func ListAllOrders(c *gin.Context) {
 	data := c.MustGet("id").(*models.User)
 	userId := data.Id
+	status := c.DefaultQuery("status", "Awaiting Payment")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "4"))
 	offset := (page - 1) * limit
-	result, err := models.FindAllOrders(userId, limit, offset)
+	result, err := models.FindAllOrders(userId, status, limit, offset)
 
 	pageInfo := &services.PageInfo{
-		Page:      page,
-		Limit:     limit,
-		TotalPage: int(math.Ceil(float64(result.Count) / float64(limit))),
-		TotalData: result.Count,
+		CurrentPage: page,
+		Limit:       limit,
+		TotalPage:   int(math.Ceil(float64(result.Count) / float64(limit))),
+		TotalData:   result.Count,
 	}
 
 	if err != nil {
@@ -75,6 +76,7 @@ func DetailOrder(c *gin.Context) {
 func CreateOrder(c *gin.Context) {
 	data := models.Order{}
 	fullNameInput := c.PostForm("fullName")
+	fmt.Println("check")
 
 	if fullNameInput == "" {
 		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
