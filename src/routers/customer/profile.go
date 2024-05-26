@@ -7,5 +7,5 @@ import (
 
 func ProfileRouter(r *gin.RouterGroup) {
 	r.GET("", customer_controllers.UserProfile)
-	r.PATCH("/:id", customer_controllers.UpdateProfile)
+	r.PATCH("", customer_controllers.UpdateProfile)
 }
