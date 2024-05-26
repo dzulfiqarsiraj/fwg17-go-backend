@@ -22,10 +22,10 @@ func ListAllCarts(c *gin.Context) {
 	result, err := models.FindAllCarts(userId, limit, offset)
 
 	pageInfo := &services.PageInfo{
-		Page:      page,
-		Limit:     limit,
-		TotalPage: int(math.Ceil(float64(result.Count) / float64(limit))),
-		TotalData: result.Count,
+		CurrentPage: page,
+		Limit:       limit,
+		TotalPage:   int(math.Ceil(float64(result.Count) / float64(limit))),
+		TotalData:   result.Count,
 	}
 
 	if err != nil {

@@ -14,22 +14,20 @@ import (
 )
 
 func ListAllOrderDetails(c *gin.Context) {
-	data := c.MustGet("id").(*models.User)
-	userId := data.Id
+	// data := c.MustGet("id").(*models.User)
+	orderId, _ := strconv.Atoi(c.Query("orderId"))
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "4"))
 	offset := (page - 1) * limit
-	result, err := models.FindAllOrderDetails(userId, limit, offset)
+	result, err := models.FindAllOrderDetails(orderId, limit, offset)
+	// fmt.Println(orderId)
 
 	pageInfo := &services.PageInfo{
-		Page:      page,
-		Limit:     limit,
-		TotalPage: int(math.Ceil(float64(result.Count) / float64(limit))),
-		TotalData: result.Count,
+		CurrentPage: page,
+		Limit:       limit,
+		TotalPage:   int(math.Ceil(float64(result.Count) / float64(limit))),
+		TotalData:   result.Count,
 	}
-
-	lastOrderId, _ := models.FindMaxIdOrder()
-	fmt.Println(&lastOrderId.Max)
 
 	if err != nil {
 		log.Fatalln(err)
