@@ -12,7 +12,7 @@ import (
 func main() {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     []string{"http://localhost:5173", "https://cov-shop.netlify.app"},
 		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE"},
 		AllowHeaders:     []string{"Authorization", "Content-Type", "Accept", "access-control-allow-origin", "access-control-allow-headers"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -26,5 +26,5 @@ func main() {
 			Message: "Resource Not Found...",
 		})
 	})
-	r.Run(":8080")
+	r.Run("0.0.0.0:8181")
 }
