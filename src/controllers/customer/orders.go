@@ -4,29 +4,73 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/DzulfiqarSiraj/go-backend/src/models"
 	"github.com/DzulfiqarSiraj/go-backend/src/services"
 	"github.com/gin-gonic/gin"
 )
 
+type Size struct {
+	AdditionalPrice int    `json:"additionalPrice"`
+	Id              int    `json:"id"`
+	Size            string `json:"size"`
+}
+
+type Variant struct {
+	AdditionalPrice int    `json:"additionalPrice"`
+	Id              int    `json:"id"`
+	Variant         string `json:"variant"`
+}
+
+type Product struct {
+	BasePrice     int     `json:"basePrice"`
+	Category      string  `json:"category"`
+	CreatedAt     string  `json:"createdAt"`
+	Description   string  `json:"description"`
+	Discount      float64 `json:"discount"`
+	Id            int     `json:"id"`
+	Image         string  `json:"image"`
+	IsRecommended bool    `json:"isRecommended"`
+	Name          string  `json:"name"`
+	Sizes         Size    `json:"sizes"`
+	Tag           string  `json:"tag"`
+	UpdatedAt     string  `json:"updatedAt"`
+	Variants      Variant `json:"variants"`
+}
+
+type ProductData struct {
+	Product  Product `json:"product"`
+	Size     Size    `json:"size"`
+	Variant  Variant `json:"variant"`
+	Quantity int     `json:"quantity"`
+	UniqueId string  `json:"uniqueId"`
+}
+
+type Cart struct {
+	CartData      []ProductData     `json:"cartData"`
+	CustData      map[string]string `json:"custData"`
+	ShippingData  string            `json:"shippingData"`
+	ShippingPrice int               `json:"shippingPrice"`
+}
+
 func ListAllOrders(c *gin.Context) {
 	data := c.MustGet("id").(*models.User)
 	userId := data.Id
+	status := c.DefaultQuery("status", "Awaiting Payment")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "4"))
 	offset := (page - 1) * limit
-	result, err := models.FindAllOrders(userId, limit, offset)
+	result, err := models.FindAllOrders(userId, status, limit, offset)
 
 	pageInfo := &services.PageInfo{
-		Page:      page,
-		Limit:     limit,
-		TotalPage: int(math.Ceil(float64(result.Count) / float64(limit))),
-		TotalData: result.Count,
+		CurrentPage: page,
+		Limit:       limit,
+		TotalPage:   int(math.Ceil(float64(result.Count) / float64(limit))),
+		TotalData:   result.Count,
 	}
 
 	if err != nil {
@@ -74,131 +118,104 @@ func DetailOrder(c *gin.Context) {
 }
 
 func CreateOrder(c *gin.Context) {
-	data := models.Order{}
+	var cartData Cart
+	orderData := models.Order{}
 	user := c.MustGet("id").(*models.User)
 	userId := user.Id
 
-	fullNameInput := c.PostForm("fullName")
-	emailInput := c.PostForm("email")
+	c.ShouldBind(&cartData)
 
-	promoIdInput, _ := strconv.Atoi(c.PostForm("promoId"))
+	// grandTotal Calculation
+	var total float64
 
-	cartInfo, err := models.TotalPrice(userId)
+	for i := 0; i < len(cartData.CartData); i++ {
+		discount := cartData.CartData[i].Product.Discount
+		basePrice := float64(cartData.CartData[i].Product.BasePrice)
+		sizeAdditionalPrice := float64(cartData.CartData[i].Size.AdditionalPrice)
+		variantAdditionalPrice := float64(cartData.CartData[i].Variant.AdditionalPrice)
+		quantity := float64(cartData.CartData[i].Quantity)
+		total = total + (((basePrice - (basePrice * discount)) + variantAdditionalPrice + sizeAdditionalPrice) * quantity)
+	}
+
+	grandTotal := total + float64(cartData.ShippingPrice) + (total * 0.05)
+
+	var randNumber string
+	arrRandNumber := rand.Perm(6)
+	for i := 0; i < len(arrRandNumber); i++ {
+		randNumber = randNumber + fmt.Sprintf("%v", arrRandNumber[i])
+	}
+
+	var customerData map[string]string = cartData.CustData
+	fullName := customerData["fullname"]
+	email := customerData["email"]
+	address := customerData["address"]
+	tax := 0.05
+	status := "Awaiting Payment"
+
+	// Mapping Order Data
+	orderData.UserId = &userId
+	orderData.OrderNumber = &randNumber
+	orderData.FullName = &fullName
+	orderData.Email = &email
+	orderData.Tax = &tax
+	orderData.GrandTotal = &grandTotal
+	orderData.DeliveryAddress = &address
+	orderData.Status = &status
+	orderData.Shipping = &cartData.ShippingData
+
+	// Create Order
+	order, err := models.CreateOrder(orderData)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 			Success: false,
-			Message: "No Product in Cart",
-		})
-	}
-
-	if fullNameInput == "" {
-		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
-			Success: false,
-			Message: "Name Must Not Be Empty",
+			Message: "Can't Create Order",
 		})
 		return
 	}
 
-	if emailInput == "" {
-		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
+	// Find Order Id
+	existOrder, err := models.FindOneOrderByOrderNumber(randNumber)
+	if err != nil {
+		c.JSON(http.StatusNotFound, &services.ResponseOnly{
 			Success: false,
-			Message: "Email Must Not Be Empty",
+			Message: "Order Not Found",
 		})
 		return
 	}
+	existOrderId := existOrder.Id
 
-	dataPromo, err := models.FindOnePromo(promoIdInput)
-	if promoIdInput != 0 {
+	// Add Data Order to Order Detail
+	for i := 0; i < len(cartData.CartData); i++ {
+		var orderDetailData models.OrderDetail
+		var basePrice float64 = float64(cartData.CartData[i].Product.BasePrice)
+		sizePrice := (cartData.CartData[i].Size.AdditionalPrice)
+		variantPrice := (cartData.CartData[i].Variant.AdditionalPrice)
+		discount := cartData.CartData[i].Product.Discount
+		quantity := cartData.CartData[i].Quantity
+		subTotal := ((basePrice - (basePrice * discount)) + float64(sizePrice) + float64(variantPrice)) * float64(quantity)
+
+		// 	// Mapping Data to Order Detail
+		orderDetailData.UserId = &userId
+		orderDetailData.OrderId = &existOrderId
+		orderDetailData.ProductId = &cartData.CartData[i].Product.Id
+		orderDetailData.ProductSizeId = &cartData.CartData[i].Size.Id
+		orderDetailData.ProductVariantId = &cartData.CartData[i].Variant.Id
+		orderDetailData.Quantity = &quantity
+		orderDetailData.SubTotal = &subTotal
+
+		_, err := models.CreateOrderDetail(orderDetailData)
 		if err != nil {
-			c.JSON(http.StatusNotFound, &services.ResponseOnly{
+			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
-				Message: "Promo Not Found",
+				Message: "Can't Create Order Detail",
 			})
 			return
 		}
 	}
 
-	orderExpire := false
-
-	if dataPromo.IsExpired == &orderExpire {
-		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
-			Success: false,
-			Message: "Promo has Expired",
-		})
-		return
-	}
-
-	orderTime := time.DateOnly
-
-	data.OrderNumber = &orderTime
-
-	// Total Price Count
-	var total float64
-	plainPrice := float64(cartInfo.TotalPrice)
-	tax := 0.1
-
-	if plainPrice < float64(*dataPromo.MinPurchase) {
-		c.JSON(http.StatusBadRequest, &services.ResponseOnly{
-			Success: false,
-			Message: fmt.Sprintf(`Failed to Use Promo %v. Sub Total is Less Than %v`, dataPromo.Code, dataPromo.MinPurchase),
-		})
-		return
-	}
-
-	if promoIdInput == 0 {
-		tax := 0.1
-		taxPrice := plainPrice * tax
-		total = plainPrice + taxPrice
-	} else {
-		tempPrice := plainPrice * *dataPromo.Percentage
-		if tempPrice > float64(*dataPromo.MaxPromo) {
-			plainPrice -= float64(*dataPromo.MaxPromo)
-			taxPrice := plainPrice * tax
-			total = plainPrice + taxPrice
-		} else if tempPrice < float64(*dataPromo.MaxPromo) {
-			plainPrice -= tempPrice
-			taxPrice := plainPrice * tax
-			total = plainPrice + taxPrice
-		}
-	}
-
-	// ~Total Price Count
-
-	c.ShouldBind(&data)
-
-	data.UserId = &userId
-	data.Tax = &tax
-	data.Total = &total
-
-	order, err := models.CreateOrder(data)
-
-	// Update orderNumber
-	orderNew := models.Order{}
-	orderNumber := fmt.Sprintf(`#INV/%v/%v`, order.Id, time.Now().Format("20060102"))
-
-	orderNew.Id = order.Id
-	orderNew.OrderNumber = &orderNumber
-
-	models.UpdateOrderNumber(orderNew)
-
-	// Update orderId at order details
-	orderDetails := models.OrderDetail{}
-
-	orderDetails.OrderId = &order.Id
-
-	models.UpdateOrderDetailByOrderId(userId, orderDetails)
-	models.DeleteAllCart(userId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, &services.ResponseOnly{
-			Success: false,
-			Message: "Internal Server Error",
-		})
-		return
-	}
-
 	c.JSON(http.StatusOK, &services.Response{
 		Success: true,
-		Message: "Order Created Successfully",
+		Message: "Ok",
 		Results: order,
 	})
 }
