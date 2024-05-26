@@ -1,7 +1,7 @@
 package routers
 
 import (
-	controllers "github.com/DzulfiqarSiraj/go-backend/src/controllers/admin"
+	controllers "github.com/DzulfiqarSiraj/go-backend/src/controllers"
 	"github.com/gin-gonic/gin"
 )
 
