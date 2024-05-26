@@ -28,10 +28,10 @@ func ListAllUsers(c *gin.Context) {
 	totalPage := int(math.Ceil(float64(result.Count) / float64(limit)))
 
 	pageInfo := &services.PageInfo{
-		Page:      page,
-		Limit:     limit,
-		TotalPage: totalPage,
-		TotalData: result.Count,
+		CurrentPage: page,
+		Limit:       limit,
+		TotalPage:   totalPage,
+		TotalData:   result.Count,
 	}
 
 	if err != nil {
@@ -122,8 +122,8 @@ func CreateUser(c *gin.Context) {
 
 	// upload file
 	if pictureInput != nil {
-		data.Picture = lib.Upload(c, "picture", "users")
-		if *data.Picture == "Invalid File Type" {
+		data.Pictures = lib.Upload(c, "picture", "users")
+		if *data.Pictures == "Invalid File Type" {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
 				Message: "File Type Must Be jpg/jpeg/png",
@@ -131,7 +131,7 @@ func CreateUser(c *gin.Context) {
 			return
 		}
 
-		if *data.Picture == "Invalid File Size" {
+		if *data.Pictures == "Invalid File Size" {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
 				Message: "File Size Must Less than 1MB",
@@ -221,8 +221,8 @@ func UpdateUser(c *gin.Context) {
 
 	// upload file
 	if fileInput != nil {
-		data.Picture = lib.Upload(c, "picture", "users")
-		if *data.Picture == "Invalid File Type" {
+		data.Pictures = lib.Upload(c, "picture", "users")
+		if *data.Pictures == "Invalid File Type" {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
 				Message: "File Type Must Be jpg/jpeg/png",
@@ -230,7 +230,7 @@ func UpdateUser(c *gin.Context) {
 			return
 		}
 
-		if *data.Picture == "Invalid File Size" {
+		if *data.Pictures == "Invalid File Size" {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
 				Message: "File Size Must Less than 1MB",
@@ -238,8 +238,8 @@ func UpdateUser(c *gin.Context) {
 			return
 		}
 
-		if existingUser.Picture != nil {
-			fileName := *existingUser.Picture
+		if existingUser.Pictures != nil {
+			fileName := *existingUser.Pictures
 			fileDest := fmt.Sprintf("uploads/users/%v", fileName)
 			fmt.Println(fileDest)
 			os.Remove(fileDest)
@@ -271,13 +271,13 @@ func DeleteUser(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
 	user, err := models.DeleteUser(id)
-	if user.Picture != nil {
-		fileName := *user.Picture
+	if user.Pictures != nil {
+		fileName := *user.Pictures
 		fileDest := fmt.Sprintf("uploads/users/%v", fileName)
 		fmt.Println(fileDest)
 		os.Remove(fileDest)
 	}
-	fmt.Println(*user.Picture)
+	fmt.Println(*user.Pictures)
 	if err != nil {
 		log.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {

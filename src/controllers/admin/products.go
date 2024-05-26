@@ -16,18 +16,18 @@ import (
 func ListAllProducts(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
-	search := c.DefaultQuery("search", "")
+	keyword := c.DefaultQuery("keyword", "")
 	category := c.DefaultQuery("category", "")
 	orderBy := c.DefaultQuery("orderBy", "id")
 
 	offset := (page - 1) * limit
-	result, err := models.FindAllProducts(category, search, orderBy, limit, offset)
+	result, err := models.FindAllProducts(category, keyword, orderBy, limit, offset)
 
 	pageInfo := &services.PageInfo{
-		Page:      page,
-		Limit:     limit,
-		TotalPage: int(math.Ceil(float64(result.Count) / float64(limit))),
-		TotalData: result.Count,
+		CurrentPage: page,
+		Limit:       limit,
+		TotalPage:   int(math.Ceil(float64(result.Count) / float64(limit))),
+		TotalData:   result.Count,
 	}
 
 	if err != nil {
@@ -50,7 +50,7 @@ func ListAllProducts(c *gin.Context) {
 func DetailProduct(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
-	product, err := models.FindOneProduct(id)
+	product, err := models.FindOneProductDetailed(id)
 	if err != nil {
 		log.Println(err)
 		if strings.HasPrefix(err.Error(), "sql: no rows") {

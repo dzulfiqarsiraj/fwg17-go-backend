@@ -20,10 +20,10 @@ func ListAllTags(c *gin.Context) {
 	result, err := models.FindAllTags(limit, offset)
 
 	pageInfo := &services.PageInfo{
-		Page:      page,
-		Limit:     limit,
-		TotalPage: int(math.Ceil(float64(result.Count) / float64(limit))),
-		TotalData: result.Count,
+		CurrentPage: page,
+		Limit:       limit,
+		TotalPage:   int(math.Ceil(float64(result.Count) / float64(limit))),
+		TotalData:   result.Count,
 	}
 
 	if err != nil {
