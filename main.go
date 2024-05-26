@@ -12,9 +12,11 @@ import (
 func main() {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:5173"},
-		AllowMethods: []string{"GET", "POST", "PATCH", "DELETE"},
-		AllowHeaders: []string{"Authorization, Content-Type, access-control-allow-origin, access-control-allow-headers"},
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE"},
+		AllowHeaders:     []string{"Authorization", "Content-Type", "Accept", "access-control-allow-origin", "access-control-allow-headers"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
 	}))
 
 	routers.Combine(r)
