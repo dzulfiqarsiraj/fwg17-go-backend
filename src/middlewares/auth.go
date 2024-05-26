@@ -73,7 +73,7 @@ func Auth() (*jwt.GinJWTMiddleware, error) {
 			}
 
 			if strings.HasPrefix(c.Request.URL.Path, "/admin") {
-				if user.Role != "Staff Administrator" {
+				if user.Role != "Administrator" {
 					return false
 				}
 			}
