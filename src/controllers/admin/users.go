@@ -122,7 +122,7 @@ func CreateUser(c *gin.Context) {
 
 	// upload file
 	if pictureInput != nil {
-		data.Pictures = lib.Upload(c, "picture", "users")
+		data.Pictures, _ = lib.Upload(c, "picture", "users")
 		if *data.Pictures == "Invalid File Type" {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
@@ -221,7 +221,7 @@ func UpdateUser(c *gin.Context) {
 
 	// upload file
 	if fileInput != nil {
-		data.Pictures = lib.Upload(c, "picture", "users")
+		data.Pictures, _ = lib.Upload(c, "picture", "users")
 		if *data.Pictures == "Invalid File Type" {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
