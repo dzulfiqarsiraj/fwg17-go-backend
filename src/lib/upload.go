@@ -1,13 +1,33 @@
 package lib
 
 import (
+	"context"
 	"fmt"
+	"os"
 
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 )
 
-func Upload(c *gin.Context, field string, dest string) *string {
+func CloudinaryConfig() *cloudinary.Cloudinary {
+	cloudName := os.Getenv("CLOUDINARY_CLOUD_NAME")
+	cloudAPI := os.Getenv("CLOUDINARY_API_KEY")
+	cloudAPISecret := os.Getenv("CLOUDINARY_API_SECRET")
+
+	cloud, _ := cloudinary.NewFromParams(cloudName, cloudAPI, cloudAPISecret)
+	return cloud
+}
+
+func Upload(c *gin.Context, field string, dest string) (*string, error) {
+	godotenv.Load()
+
+	cloud := CloudinaryConfig()
+
+	var ctx = context.Background()
+
 	file, _ := c.FormFile(field)
 	invalidType := "Invalid File Type"
 	invalidSize := "Invalid File Size"
@@ -23,20 +43,21 @@ func Upload(c *gin.Context, field string, dest string) *string {
 	_, typeExists := fileExt[fileType]
 
 	if !typeExists {
-		return &invalidType
+		return &invalidType, c.Err()
 	}
 
 	if file.Size > 1048576 {
-		return &invalidSize
+		return &invalidSize, c.Err()
 	}
 
-	fmt.Println(file.Header)
-	fmt.Println(fileType)
-	fmt.Println(file.Size)
+	fileName := fmt.Sprintf("%v", uuid.NewString())
+	fileDestCloudinary := fmt.Sprintf("cov-shop/%v/%v", dest, fileName)
 
-	fileName := fmt.Sprintf("%v%v", uuid.NewString(), fileExt[fileType])
-	fileDest := fmt.Sprintf("uploads/%v/%v", dest, fileName)
+	// Upload file to Cloudinary
+	resp, err := cloud.Upload.Upload(ctx, file, uploader.UploadParams{PublicID: fileDestCloudinary})
+	if err != nil {
+		fmt.Println("error")
+	}
 
-	c.SaveUploadedFile(file, fileDest)
-	return &fileName
+	return &resp.SecureURL, c.Err()
 }
