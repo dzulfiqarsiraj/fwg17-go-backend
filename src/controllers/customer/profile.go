@@ -17,7 +17,6 @@ import (
 func UserProfile(c *gin.Context) {
 	data := c.MustGet("id").(*models.User)
 	id := data.Id
-	fmt.Println(id)
 
 	user, err := models.FindOneUser(id)
 	if err != nil {
@@ -82,8 +81,8 @@ func UpdateProfile(c *gin.Context) {
 
 	// upload file
 	if fileInput != nil {
-		data.Picture = lib.Upload(c, "picture", "users")
-		if *data.Picture == "Invalid File Type" {
+		data.Pictures = lib.Upload(c, "picture", "users")
+		if *data.Pictures == "Invalid File Type" {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
 				Message: "File Type Must Be jpg/jpeg/png",
@@ -91,7 +90,7 @@ func UpdateProfile(c *gin.Context) {
 			return
 		}
 
-		if *data.Picture == "Invalid File Size" {
+		if *data.Pictures == "Invalid File Size" {
 			c.JSON(http.StatusBadRequest, &services.ResponseOnly{
 				Success: false,
 				Message: "File Size Must Less than 1MB",
@@ -99,8 +98,8 @@ func UpdateProfile(c *gin.Context) {
 			return
 		}
 
-		if existingUser.Picture != nil {
-			fileName := *existingUser.Picture
+		if existingUser.Pictures != nil {
+			fileName := *existingUser.Pictures
 			fileDest := fmt.Sprintf("uploads/users/%v", fileName)
 			fmt.Println(fileDest)
 			os.Remove(fileDest)
