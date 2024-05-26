@@ -11,7 +11,7 @@ import (
 
 func conn() *sqlx.DB {
 	godotenv.Load()
-	db, err := sqlx.Connect("postgres", os.Getenv("POSTGRES_URL"))
+	db, err := sqlx.Connect("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatalln(err)
 	}
