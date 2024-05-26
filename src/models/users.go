@@ -13,13 +13,13 @@ var db *sqlx.DB = lib.DB
 
 type User struct {
 	Id          int        `db:"id" json:"id"`
+	FullName    *string    `db:"fullName" json:"fullName" form:"fullName"`
 	Email       string     `db:"email" json:"email" form:"email"`
 	Password    string     `db:"password" json:"password" form:"password"`
-	FullName    *string    `db:"fullName" json:"fullName" form:"fullName"`
-	PhoneNumber *string    `db:"phoneNumber" json:"phoneNumber" form:"phoneNumber"`
 	Address     *string    `db:"address" json:"address" form:"address"`
+	PhoneNumber *string    `db:"phoneNumber" json:"phoneNumber" form:"phoneNumber"`
 	Role        string     `db:"role" json:"role" form:"role"`
-	Picture     *string    `db:"picture" json:"picture"`
+	Pictures    *string    `db:"pictures" json:"pictures"`
 	CreatedAt   *time.Time `db:"createdAt" json:"createdAt"`
 	UpdatedAt   *time.Time `db:"updatedAt" json:"updatedAt"`
 }
@@ -78,8 +78,8 @@ func FindOneUserByEmail(email string) (User, error) {
 
 func CreateUser(data User) (User, error) {
 	sql := `
-	INSERT INTO "users" ("email","password","fullName","phoneNumber","address","role","picture") VALUES
-	(:email, :password, :fullName, :phoneNumber, :address, COALESCE(:role,'Customer'), :picture)
+	INSERT INTO "users" ("email","password","fullName","phoneNumber","address","role","pictures") VALUES
+	(:email, :password, :fullName, :phoneNumber, :address, COALESCE(:role,'Customer'), :pictures)
 	RETURNING *`
 
 	result := User{}
