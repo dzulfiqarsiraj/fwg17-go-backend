@@ -12,7 +12,7 @@ import (
 func main() {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "https://cov-shop.netlify.app"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:5174", "https://cov-shop.netlify.app", "https://cov-go.netlify.app", "http://143.110.156.215:5174"},
 		AllowMethods:     []string{"GET", "POST", "PATCH", "DELETE"},
 		AllowHeaders:     []string{"Authorization", "Content-Type", "Accept", "access-control-allow-origin", "access-control-allow-headers"},
 		ExposeHeaders:    []string{"Content-Length"},
